@@ -1501,15 +1501,16 @@ body.dark .ai-float-email-success {
         plusBtn.querySelector('.icon-plus').style.display = 'none';
         plusBtn.querySelector('.icon-stop').style.display = 'block';
 
-        // 创建 AI 消息气泡（流式填充）
+        // 创建 AI 消息气泡（先显示加载动画，流式填充时替换）
         var aiDiv = document.createElement('div');
         aiDiv.className = 'ai-float-msg ai-float-msg--ai';
-        aiDiv.innerHTML = '<div class="ai-float-bubble"></div>';
+        aiDiv.innerHTML = '<div class="ai-float-bubble"><div class="ai-float-typing"><span></span><span></span><span></span></div></div>';
         messages.appendChild(aiDiv);
         var aiBubble = aiDiv.querySelector('.ai-float-bubble');
         scrollToBottom();
 
         var fullReply = '';
+        var firstChunk = true;
         var abortController = new AbortController();
         chatAbortController = abortController;
 
@@ -1547,6 +1548,10 @@ body.dark .ai-float-email-success {
                                 }
                                 if (data.text) {
                                     fullReply += data.text;
+                                    if (firstChunk) {
+                                        firstChunk = false;
+                                        aiBubble.innerHTML = '';
+                                    }
                                     aiBubble.innerHTML = formatText(fullReply);
                                     scrollToBottom();
                                 }
