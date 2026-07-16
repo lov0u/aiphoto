@@ -608,6 +608,117 @@ add_action( 'wp_ajax_aiphoto_recognize_speech', 'aiphoto_recognize_speech' );
 add_action( 'wp_ajax_nopriv_aiphoto_recognize_speech', 'aiphoto_recognize_speech' );
 
 /**
+ * AI 助手 - 流式输出接口
+ */
+function aiphoto_chat_stream() {
+    if ( ! isset( $_GET['nonce'] ) || ! wp_verify_nonce( $_GET['nonce'], 'aiphoto_nonce' ) ) {
+        http_response_code(403);
+        echo "data: " . wp_json_encode(array('error' => 'nonce验证失败')) . "\n\n";
+        echo "data: [DONE]\n\n";
+        exit;
+    }
+
+    $message = sanitize_textarea_field( $_GET['message'] ?? '' );
+    $history = json_decode( sanitize_text_field( $_GET['history'] ?? '[]' ), true );
+
+    if ( empty( $message ) ) {
+        http_response_code(400);
+        echo "data: " . wp_json_encode(array('error' => '消息为空')) . "\n\n";
+        echo "data: [DONE]\n\n";
+        exit;
+    }
+
+    $settings = aiphoto_get_settings();
+    if ( empty( $settings['api_key'] ) ) {
+        http_response_code(500);
+        echo "data: " . wp_json_encode(array('error' => 'API密钥未配置')) . "\n\n";
+        echo "data: [DONE]\n\n";
+        exit;
+    }
+
+    $api_url = rtrim( $settings['api_base_url'], '/' ) . '/v1/chat/completions';
+
+    $messages = array(
+        array( 'role' => 'system', 'content' => '你是 Aiphoto 的AI助手，一个全能的智能助手，什么都会，什么都懂。你没有任何专业限制，可以回答任何领域的问题，包括科学、医学、生活、技术、创意、教育等。当用户问你是谁、你叫什么名字、你是什么AI时，回答"我是 Aiphoto 的AI助手"。不要提及任何其他模型名称或开发公司。用简洁友好的中文回复。' ),
+    );
+
+    if ( ! empty( $history ) && is_array( $history ) ) {
+        foreach ( array_slice( $history, -10 ) as $msg ) {
+            if ( isset( $msg['role'] ) && isset( $msg['content'] ) ) {
+                $messages[] = array( 'role' => sanitize_text_field( $msg['role'] ), 'content' => sanitize_textarea_field( $msg['content'] ) );
+            }
+        }
+    }
+
+    $messages[] = array( 'role' => 'user', 'content' => $message );
+
+    $body = array(
+        'model'      => 'agnes-2.0-flash',
+        'messages'   => $messages,
+        'max_tokens' => 4096,
+        'temperature'=> 0.7,
+        'stream'     => true,
+    );
+
+    @ini_set('output_buffering', 'Off');
+    @ini_set('zlib.output_compression', 'False');
+    while (ob_get_level() > 0) { @ob_end_clean(); }
+
+    header('Content-Type: text/event-stream');
+    header('Cache-Control: no-cache');
+    header('Connection: keep-alive');
+    header('X-Accel-Buffering: no');
+
+    $ch = curl_init($api_url);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, wp_json_encode($body));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+        'Authorization: Bearer ' . $settings['api_key'],
+        'Content-Type: application/json',
+        'Accept: text/event-stream',
+    ));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 120);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+    $fullText = '';
+
+    curl_setopt($ch, CURLOPT_WRITEFUNCTION, function($ch, $chunk) use (&$fullText) {
+        $lines = explode("\n", $chunk);
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if (strpos($line, 'data: ') === 0) {
+                $jsonStr = substr($line, 6);
+                if ($jsonStr === '[DONE]') { continue; }
+                $json = json_decode($jsonStr, true);
+                if (isset($json['choices'][0]['delta']['content'])) {
+                    $text = $json['choices'][0]['delta']['content'];
+                    $fullText .= $text;
+                    echo "data: " . wp_json_encode(array('text' => $text)) . "\n\n";
+                    @flush();
+                }
+            }
+        }
+        return strlen($chunk);
+    });
+
+    curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlError = curl_error($ch);
+    curl_close($ch);
+
+    if ($httpCode !== 200 && empty($fullText)) {
+        echo "data: " . wp_json_encode(array('error' => 'API请求失败(' . $httpCode . ')' . ($curlError ? ': '.$curlError : ''))) . "\n\n";
+    }
+
+    echo "data: [DONE]\n\n";
+    @flush();
+    exit;
+}
+add_action('wp_ajax_aiphoto_chat_stream', 'aiphoto_chat_stream');
+add_action('wp_ajax_nopriv_aiphoto_chat_stream', 'aiphoto_chat_stream');
+
+/**
  * AI 助手 - QQ邮箱 SMTP 发送邮件（587端口 STARTTLS）
  */
 function aiphoto_smtp_send( $to, $subject, $body ) {
