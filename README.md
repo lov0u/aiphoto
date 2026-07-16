@@ -1,6 +1,12 @@
 # Aiphoto - WordPress AI 图片展示主题
 ![AIPhoto](README-banner.png)
+<div align="center">
+
 **🌐 主站：[ra0.cn](https://ra0.cn)** | **🎨 AI 图片站：[aiphoto.ra0.cn](https://aiphoto.ra0.cn)**
+
+Made with ❤️ by [Aiphoto](https://aiphoto.ra0.cn)
+
+</div>
 
 一个现代化的 WordPress 主题，专注于 AI 生成图片的展示与在线创作。
 
