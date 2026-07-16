@@ -10,6 +10,8 @@ Made with ❤️ by [Aiphoto](https://aiphoto.ra0.cn)
 
 一个现代化的 WordPress 主题，专注于 AI 生成图片的展示与在线创作。
 
+![AIPhoto](README-banner.png)
+
 ## 功能特性
 
 - **在线图片生成** - 首页 Hero 区域集成 AI 图片生成器
@@ -170,3 +172,13 @@ GNU通用公共许可证第2版或更高版本
 - 瀑布流画廊
 - 深色 AI-Native UI 设计
 - 响应式布局
+
+---
+
+<div align="center">
+
+**🌐 主站：[ra0.cn](https://ra0.cn)** | **🎨 AI 图片站：[aiphoto.ra0.cn](https://aiphoto.ra0.cn)**
+
+Made with ❤️ by [Aiphoto](https://aiphoto.ra0.cn)
+
+</div>
