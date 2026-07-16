@@ -1819,43 +1819,59 @@ body.dark .ai-float-email-success {
     function startSpeechRecognition(SR) {
         recognition = new SR();
         recognition.lang = 'zh-CN';
-        recognition.continuous = false;
+        recognition.continuous = true;
         recognition.interimResults = false;
-        var gotResult = false;
 
-        recognition.onresult = function(event) {
-            gotResult = true;
-            if (event.results[0] && event.results[0][0]) {
-                var text = event.results[0][0].transcript;
-                if (text.trim()) {
-                    playSendSound();
-                    var welcome = document.getElementById('aiFloatWelcome');
-                    if (welcome) welcome.remove();
-                    input.value = text.trim();
-                    input.style.height = 'auto';
-                    input.style.height = Math.min(input.scrollHeight, 80) + 'px';
-                    sendBtn.disabled = false;
-                    sendMsg();
-                    isRecording = false;
-                    voiceOverlay.classList.remove('active');
-                    voiceBackdrop.classList.remove('active');
-                    return;
+        function onResult(event) {
+            var text = '';
+            for (var i = 0; i < event.results.length; i++) {
+                if (event.results[i].isFinal) {
+                    text += event.results[i][0].transcript;
                 }
             }
-            useVosk = true; isRecording = false; startMediaRecorder();
-        };
+            if (text.trim()) { finalTranscript = text.trim(); }
+        }
 
-        recognition.onerror = function(event) {
-            if (event.error === 'no-speech' || event.error === 'aborted') {
-                if (!gotResult) { useVosk = true; isRecording = false; startMediaRecorder(); }
-                return;
+        function onEnd() {
+            // 用户还没松开，自动重启
+            if (isRecording && !userStopped) {
+                try {
+                    recognition = new SR();
+                    recognition.lang = 'zh-CN';
+                    recognition.continuous = true;
+                    recognition.interimResults = false;
+                    recognition.onresult = onResult;
+                    recognition.onerror = onError;
+                    recognition.onend = onEnd;
+                    recognition.start();
+                    return;
+                } catch(e) {}
             }
-            useVosk = true; isRecording = false; startMediaRecorder();
-        };
+            // 用户松开了，处理结果
+            isRecording = false;
+            if (isCancelled) return;
+            if (finalTranscript.trim()) {
+                playSendSound();
+                var welcome = document.getElementById('aiFloatWelcome');
+                if (welcome) welcome.remove();
+                input.value = finalTranscript;
+                input.style.height = 'auto';
+                input.style.height = Math.min(input.scrollHeight, 80) + 'px';
+                sendBtn.disabled = false;
+                sendMsg();
+            } else {
+                useVosk = true; startMediaRecorder();
+            }
+        }
 
-        recognition.onend = function() {
-            if (!gotResult && isRecording) { useVosk = true; isRecording = false; startMediaRecorder(); }
-        };
+        function onError(event) {
+            if (event.error === 'no-speech' || event.error === 'aborted') return;
+            useVosk = true; isRecording = false; startMediaRecorder();
+        }
+
+        recognition.onresult = onResult;
+        recognition.onerror = onError;
+        recognition.onend = onEnd;
 
         try {
             isRecording = true; recordingStartTime = Date.now();
