@@ -1,9 +1,9 @@
 <?php
 /**
- * AIPhoto Theme Functions
+ * AIPhoto 主题函数
  */
 
-if ( ! defined( 'ABSPATH' ) ) {
+如果 ( ! 定义了( 'ABSPATH' ) ) {
     exit;
 }
 
@@ -115,7 +115,7 @@ register_activation_hook( __FILE__, 'aiphoto_flush_rules' );
 
 function aiphoto_get_settings() {
     $defaults = array(
-        'api_key'         => 'wk-mGhyMZKCVgzlgixVmvWdxrK7JJUmUymI6oAgFt7Qug0m97i6',
+        'api_key'         => 'wk-mGhyMZKCVgzlgixVmvWdxrK7JJUmUymI6oAgFt7Qug0m',
         'api_base_url'    => 'https://apihub.agnes-ai.com',
         'api_model'       => 'agnes-image-2.1-flash',
         'api_image_size'  => '1K',
@@ -174,7 +174,7 @@ function aiphoto_generate_image() {
     // 特效和镜头翻译
     $effect_map = array(
         'cinematic'       => 'cinematic lighting, dramatic atmosphere, movie scene quality, professional color grading, film grain, volumetric lighting',
-        'pixel-art'       => 'pixel art style, retro 8-bit game aesthetic, crisp pixel details, nostalgic vintage feel',
+        'pixel-art'       => '像素艺术风格，复古8位游戏美学，清晰的像素细节，怀旧的复古氛围',
         'cartoon'         => 'cartoon style, vibrant colors, bold outlines, playful and fun, animated movie quality',
         '3d-render'       => '3D rendered, octane render, ray tracing, ultra detailed, studio lighting, physically based rendering',
         'watercolor'      => 'watercolor painting style, soft translucent colors, paper texture, artistic brush strokes, delicate washes',
