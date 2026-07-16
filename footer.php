@@ -1344,6 +1344,15 @@ body.dark .ai-float-email-success {
         btn.classList.remove('is-open');
     });
 
+    // 聊天框内滚动时不滚动页面
+    messages.addEventListener('wheel', function(e) {
+        var atTop = messages.scrollTop === 0 && e.deltaY < 0;
+        var atBottom = messages.scrollTop + messages.clientHeight >= messages.scrollHeight - 1 && e.deltaY > 0;
+        if (!atTop && !atBottom) {
+            e.stopPropagation();
+        }
+    }, { passive: true });
+
     // 清空聊天记录
     clearBtn.addEventListener('click', function() {
         if (!confirm('确定要清空聊天记录吗？')) return;
