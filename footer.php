@@ -1555,7 +1555,6 @@ body.dark .ai-float-email-success {
     var voiceModeActive = false;
     var finalTranscript = '';
 
-    // 模式切换（🎤 ↔ ⌨️）
     toggleBtn.addEventListener('click', function() {
         voiceModeActive = !voiceModeActive;
         if (voiceModeActive) {
@@ -1575,184 +1574,92 @@ body.dark .ai-float-email-success {
         plusMenu.classList.remove('active');
     });
 
-    // + 号按钮菜单
-    plusBtn.addEventListener('click', function() {
-        plusMenu.classList.toggle('active');
-    });
-
-    // 点击其他区域关闭菜单
+    plusBtn.addEventListener('click', function() { plusMenu.classList.toggle('active'); });
     document.addEventListener('click', function(e) {
-        if (!plusBtn.contains(e.target) && !plusMenu.contains(e.target)) {
-            plusMenu.classList.remove('active');
-        }
+        if (!plusBtn.contains(e.target) && !plusMenu.contains(e.target)) plusMenu.classList.remove('active');
     });
 
-    // 菜单项点击
     var menuItems = plusMenu.querySelectorAll('.ai-float-plus-menu-item');
     for (var i = 0; i < menuItems.length; i++) {
         menuItems[i].addEventListener('click', function() {
             var action = this.getAttribute('data-action');
             plusMenu.classList.remove('active');
-            if (action === 'photo') {
-                // 触发图片上传
-                var fileInput = document.createElement('input');
-                fileInput.type = 'file';
-                fileInput.accept = 'image/*';
-                fileInput.onchange = function() {
-                    if (this.files && this.files[0]) {
-                        addMsg('已选择图片：' + this.files[0].name, 'user', true);
-                    }
-                };
-                fileInput.click();
-            } else if (action === 'file') {
-                // 触发文件上传
-                var fileInput = document.createElement('input');
-                fileInput.type = 'file';
-                fileInput.onchange = function() {
-                    if (this.files && this.files[0]) {
-                        addMsg('已选择文件：' + this.files[0].name, 'user', true);
-                    }
-                };
-                fileInput.click();
-            }
+            var fileInput = document.createElement('input');
+            if (action === 'photo') { fileInput.type = 'file'; fileInput.accept = 'image/*'; }
+            else { fileInput.type = 'file'; }
+            fileInput.onchange = function() {
+                if (this.files && this.files[0]) addMsg('已选择' + (action === 'photo' ? '图片' : '文件') + '：' + this.files[0].name, 'user', true);
+            };
+            fileInput.click();
         });
     }
 
-    // 遮罩点击取消录音
-    voiceBackdrop.addEventListener('click', function() {
-        if (isRecording) stopRecording(true);
-    });
+    voiceBackdrop.addEventListener('click', function() { if (isRecording) stopRecording(true); });
 
-    // 按住说话 - 触摸事件
     holdBtn.addEventListener('touchstart', function(e) {
-        e.preventDefault();
-        if (isGenerating) return;
-        touchStartY = e.touches[0].clientY;
-        startRecording();
+        e.preventDefault(); if (isGenerating) return;
+        touchStartY = e.touches[0].clientY; startRecording();
     });
-
-    // touchmove 和 touchend 绑在 document 上，防止手指滑出按钮区域后事件丢失
     document.addEventListener('touchmove', function(e) {
         if (!isRecording) return;
         var dy = e.touches[0].clientY - touchStartY;
-        if (dy < -60) {
-            voiceOverlay.classList.add('cancel');
-            voiceHintEl.textContent = '松开 取消';
-        } else {
-            voiceOverlay.classList.remove('cancel');
-            voiceHintEl.textContent = '松开 发送';
-        }
+        voiceOverlay.classList.toggle('cancel', dy < -60);
+        voiceHintEl.textContent = dy < -60 ? '松开 取消' : '松开 发送';
     }, { passive: true });
+    document.addEventListener('touchend', function(e) { if (!isRecording) return; stopRecording(voiceOverlay.classList.contains('cancel')); });
+    document.addEventListener('touchcancel', function(e) { if (!isRecording) return; stopRecording(true); });
 
-    document.addEventListener('touchend', function(e) {
-        if (!isRecording) return;
-        var cancelled = voiceOverlay.classList.contains('cancel');
-        stopRecording(cancelled);
-    });
-
-    document.addEventListener('touchcancel', function(e) {
-        if (!isRecording) return;
-        stopRecording(true);
-    });
-
-    // 按住说话 - 鼠标事件
     holdBtn.addEventListener('mousedown', function(e) {
-        e.preventDefault();
-        if (isGenerating) return;
-        touchStartY = e.clientY;
-        startRecording();
+        e.preventDefault(); if (isGenerating) return;
+        touchStartY = e.clientY; startRecording();
     });
-
     document.addEventListener('mousemove', function(e) {
         if (!isRecording) return;
         var dy = e.clientY - touchStartY;
-        if (dy < -60) {
-            voiceOverlay.classList.add('cancel');
-            voiceHintEl.textContent = '松开 取消';
-        } else {
-            voiceOverlay.classList.remove('cancel');
-            voiceHintEl.textContent = '松开 发送';
-        }
+        voiceOverlay.classList.toggle('cancel', dy < -60);
+        voiceHintEl.textContent = dy < -60 ? '松开 取消' : '松开 发送';
     });
+    document.addEventListener('mouseup', function(e) { if (!isRecording) return; stopRecording(voiceOverlay.classList.contains('cancel')); });
 
-    document.addEventListener('mouseup', function(e) {
-        if (!isRecording) return;
-        var cancelled = voiceOverlay.classList.contains('cancel');
-        stopRecording(cancelled);
-    });
-
-    // 发送音效（类似微信"嗖"的声音）
     function playSendSound() {
         try {
             var ctx = new (window.AudioContext || window.webkitAudioContext)();
-            var osc = ctx.createOscillator();
-            var gain = ctx.createGain();
-            osc.connect(gain);
-            gain.connect(ctx.destination);
+            var osc = ctx.createOscillator(); var gain = ctx.createGain();
+            osc.connect(gain); gain.connect(ctx.destination);
             osc.type = 'sine';
             osc.frequency.setValueAtTime(800, ctx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(1600, ctx.currentTime + 0.08);
             gain.gain.setValueAtTime(0.3, ctx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
-            osc.start(ctx.currentTime);
-            osc.stop(ctx.currentTime + 0.15);
+            osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.15);
             setTimeout(function() { ctx.close(); }, 200);
         } catch(e) {}
     }
 
     function setupRecognition() {
         recognition.lang = 'zh-CN';
-        recognition.continuous = true;
+        recognition.continuous = false;
         recognition.interimResults = true;
-
         recognition.onresult = function(event) {
-            var interim = '';
             finalTranscript = '';
             for (var i = 0; i < event.results.length; i++) {
-                if (event.results[i].isFinal) {
-                    finalTranscript += event.results[i][0].transcript;
-                } else {
-                    interim += event.results[i][0].transcript;
-                }
+                if (event.results[i].isFinal) finalTranscript += event.results[i][0].transcript;
             }
         };
-
         recognition.onerror = function(event) {
-            if (event.error === 'no-speech' || event.error === 'aborted') {
-                return;
-            }
-            if (event.error === 'not-allowed') {
-                addMsg('麦克风权限被拒绝，请在浏览器设置中允许麦克风访问。', 'ai', true);
-            } else if (event.error === 'network') {
-                addMsg('网络错误，语音识别需要网络连接。', 'ai', true);
-            } else {
-                addMsg('语音识别出错：' + event.error, 'ai', true);
-            }
+            if (event.error === 'no-speech' || event.error === 'aborted') return;
+            if (event.error === 'not-allowed') addMsg('麦克风权限被拒绝，请点击地址栏左侧的锁图标，允许麦克风访问。', 'ai', true);
+            else if (event.error === 'network') addMsg('语音识别不可用，请确认网站地址是 https:// 开头，或使用 Chrome/Edge 浏览器。', 'ai', true);
+            else addMsg('语音识别出错：' + event.error, 'ai', true);
         };
-
         recognition.onend = function() {
-            // 用户还没松开按钮，自动重启识别（处理停顿）
             if (isRecording && !userStopped) {
-                var restarted = false;
-                try {
-                    recognition.start();
-                    restarted = true;
-                } catch(e) {
-                    try {
-                        recognition = new SpeechRecognition();
-                        setupRecognition();
-                        recognition.start();
-                        restarted = true;
-                    } catch(e2) {}
-                }
-                if (restarted) return;
+                try { recognition.start(); return; } catch(e) {}
+                try { recognition = new SpeechRecognition(); setupRecognition(); recognition.start(); return; } catch(e2) {}
             }
-
-            // 用户已松开按钮，处理结果
             isRecording = false;
-            if (isCancelled) {
-                // 取消，不做任何事
-            } else if (finalTranscript.trim()) {
+            if (isCancelled) return;
+            if (finalTranscript.trim()) {
                 playSendSound();
                 var welcome = document.getElementById('aiFloatWelcome');
                 if (welcome) welcome.remove();
@@ -1768,73 +1675,31 @@ body.dark .ai-float-email-success {
     }
 
     function startRecording() {
-        var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-            var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-            if (isIOS) {
-                addMsg('iOS 浏览器不支持语音识别，请使用 Chrome 或 Edge 浏览器。', 'ai', true);
-            } else {
-                addMsg('您的浏览器不支持语音识别，请使用 Chrome 或 Edge 浏览器。', 'ai', true);
-            }
-            return;
-        }
-
-        isCancelled = false;
-        userStopped = false;
-        finalTranscript = '';
-
-        recognition = new SpeechRecognition();
-        setupRecognition();
-
-        try {
-            recognition.start();
-        } catch(e) {
-            addMsg('语音识别启动失败，请重试。', 'ai', true);
-            return;
-        }
-
-        isRecording = true;
-        recordingStartTime = Date.now();
-        voiceOverlay.classList.add('active');
-        voiceBackdrop.classList.add('active');
-        voiceHintEl.textContent = '松开 发送';
-        updateRecordingTimer();
-
-        // 安全超时：60秒后自动停止，防止卡死
-        recordingSafetyTimer = setTimeout(function() {
-            if (isRecording) stopRecording(false);
-        }, 60000);
+        var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) { addMsg('您的浏览器不支持语音识别，请使用 Chrome 或 Edge 浏览器。', 'ai', true); return; }
+        isCancelled = false; userStopped = false; finalTranscript = '';
+        recognition = new SR(); setupRecognition();
+        try { recognition.start(); } catch(e) { addMsg('语音识别启动失败，请重试。', 'ai', true); return; }
+        isRecording = true; recordingStartTime = Date.now();
+        voiceOverlay.classList.add('active'); voiceBackdrop.classList.add('active');
+        voiceHintEl.textContent = '松开 发送'; updateRecordingTimer();
+        recordingSafetyTimer = setTimeout(function() { if (isRecording) stopRecording(false); }, 60000);
     }
 
     function stopRecording(cancel) {
-        isCancelled = cancel;
-        userStopped = true;
-        clearTimeout(recordingTimerInterval);
-        clearTimeout(recordingSafetyTimer);
+        isCancelled = cancel; userStopped = true;
+        clearTimeout(recordingTimerInterval); clearTimeout(recordingSafetyTimer);
         voiceOverlay.classList.remove('active', 'cancel');
         voiceBackdrop.classList.remove('active');
-
-        if (recognition) {
-            try {
-                recognition.stop();
-            } catch(e) {
-                isRecording = false;
-            }
-        } else {
-            isRecording = false;
-        }
+        if (recognition) { try { recognition.stop(); } catch(e) { isRecording = false; } }
+        else isRecording = false;
     }
 
     function updateRecordingTimer() {
-        var elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
-        var min = Math.floor(elapsed / 60);
-        var sec = elapsed % 60;
-        voiceTimerEl.textContent = min + ':' + (sec < 10 ? '0' : '') + sec;
-        if (isRecording) {
-            recordingTimerInterval = setTimeout(updateRecordingTimer, 200);
-        }
+        var e = Math.floor((Date.now() - recordingStartTime) / 1000);
+        voiceTimerEl.textContent = Math.floor(e/60) + ':' + (e%60 < 10 ? '0' : '') + (e%60);
+        if (isRecording) recordingTimerInterval = setTimeout(updateRecordingTimer, 200);
     }
-
     loadHistory();
 })();
 
