@@ -850,15 +850,16 @@ $settings = aiphoto_get_settings();
         // 显示加载
         isGenerating = true;
 
-        // 创建 AI 消息气泡（流式填充）
+        // 创建 AI 消息气泡（先显示加载动画）
         var aiDiv = document.createElement('div');
         aiDiv.className = 'chat-message chat-message--ai';
-        aiDiv.innerHTML = '<div class="chat-bubble"></div>';
+        aiDiv.innerHTML = '<div class="chat-bubble"><div class="chat-typing"><span></span><span></span><span></span></div></div>';
         chatMessages.appendChild(aiDiv);
         var aiBubble = aiDiv.querySelector('.chat-bubble');
         scrollToBottom();
 
         var fullReply = '';
+        var firstChunk = true;
 
         var streamUrl = aiphotoAjax.url + '?action=aiphoto_chat_stream&nonce=' +
             encodeURIComponent(aiphotoAjax.nonce) +
@@ -894,6 +895,10 @@ $settings = aiphoto_get_settings();
                                 }
                                 if (data.text) {
                                     fullReply += data.text;
+                                    if (firstChunk) {
+                                        firstChunk = false;
+                                        aiBubble.innerHTML = '';
+                                    }
                                     aiBubble.innerHTML = formatMessage(fullReply);
                                     scrollToBottom();
                                 }
