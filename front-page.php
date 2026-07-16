@@ -88,7 +88,7 @@ if ( $page === 'home' && isset( $_SERVER['REQUEST_URI'] ) ) {
         </div>
 
         <h1 class="lp-hero-title">
-            用 AI 创造<br>
+              创造 AI 奇迹<br>
             <span class="lp-gradient-text">免费可商用的精美图片</span>
         </h1>
 
