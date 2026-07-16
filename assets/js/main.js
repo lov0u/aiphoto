@@ -236,14 +236,13 @@
         function startPolling(state) {
             if (genPollTimer) clearInterval(genPollTimer);
             var attempts = 0;
-            var maxAttempts = 60; // 最多轮询 2 分钟（每 2 秒一次）
+            var maxAttempts = 15; // 最多轮询 30 秒（每 2 秒一次）
 
             genPollTimer = setInterval(function() {
                 attempts++;
                 if (attempts > maxAttempts) {
                     clearInterval(genPollTimer);
                     setLoading(false);
-                    showError('生成超时，请稍后刷新查看');
                     localStorage.removeItem('aiphoto_pending_gen');
                     return;
                 }
@@ -277,9 +276,10 @@
         (function restorePendingGen() {
             var pending = localStorage.getItem('aiphoto_pending_gen');
             if (!pending) return;
-            try { pending = JSON.parse(pending); } catch (e) { return; }
+            try { pending = JSON.parse(pending); } catch (e) { localStorage.removeItem('aiphoto_pending_gen'); return; }
 
-            if (Date.now() - pending.time > 600000) {
+            // 超过 2 分钟直接清理
+            if (Date.now() - pending.time > 120000) {
                 localStorage.removeItem('aiphoto_pending_gen');
                 return;
             }
@@ -350,6 +350,7 @@
         }
 
         function showSuccess(data) {
+            setLoading(false);
             if (result && resultImage) {
                 // 预览用压缩版（加载快），下载用原图
                 resultImage.src = data.gallery_url || data.url;
@@ -386,6 +387,7 @@
         }
 
         function showError(msg) {
+            setLoading(false);
             if (errorMessage) {
                 errorMessage.textContent = msg;
                 errorMessage.style.display = 'block';

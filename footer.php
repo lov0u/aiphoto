@@ -457,26 +457,41 @@ body.dark .ai-float-clear:hover {
 
 /* 输入区域 */
 .ai-float-input-area {
-    padding: 12px;
+    padding: 10px 12px;
     border-top: 1px solid var(--color-border, #e2e8f0);
     background: var(--color-bg-base, #fff);
     flex-shrink: 0;
+    position: relative;
 }
 
-.ai-float-input-wrap {
+.ai-float-input-row {
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     gap: 8px;
+}
+
+.ai-float-input-middle {
+    flex: 1;
+    min-width: 0;
     background: var(--color-bg-surface, #f8fafc);
     border: 1px solid var(--color-border, #e2e8f0);
     border-radius: 12px;
-    padding: 6px 8px 6px 14px;
+    padding: 4px 8px 4px 14px;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.ai-float-input-wrap:focus-within {
+.ai-float-input-middle:focus-within {
     border-color: #7c3aed;
     box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+}
+
+.ai-float-text-area {
+    display: flex;
+}
+
+.ai-float-voice-area {
+    display: flex;
+    padding: 0;
 }
 
 .ai-float-input {
@@ -494,7 +509,7 @@ body.dark .ai-float-clear:hover {
 
 .ai-float-send {
     width: 34px;
-    height: 34px;
+    height: 42px;
     border-radius: 10px;
     background: #7c3aed;
     color: #fff;
@@ -571,7 +586,7 @@ body.dark .ai-float-input-area {
     border-color: #334155;
 }
 
-body.dark .ai-float-input-wrap {
+body.dark .ai-float-input-middle {
     background: #334155;
     border-color: #475569;
 }
@@ -697,6 +712,257 @@ body.dark .ai-float-email-success {
     background: #166534;
     color: #dcfce7;
 }
+
+/* ===== 语音模式切换按钮 ===== */
+.ai-float-toggle {
+    width: 34px;
+    height: 42px;
+    border-radius: 10px;
+    background: var(--color-bg-surface, #f8fafc);
+    border: 1px solid var(--color-border, #e2e8f0);
+    color: var(--color-foreground-muted, #64748b);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    padding: 0;
+}
+
+.ai-float-toggle:hover {
+    background: #f5f3ff;
+    border-color: #7c3aed;
+    color: #7c3aed;
+}
+
+.ai-float-toggle.active {
+    background: #7c3aed;
+    border-color: #7c3aed;
+    color: #fff;
+}
+
+.ai-float-toggle svg { width: 18px; height: 18px; }
+
+/* ===== + 号按钮 ===== */
+.ai-float-plus {
+    width: 34px;
+    height: 42px;
+    border-radius: 10px;
+    background: var(--color-bg-surface, #f8fafc);
+    border: 1px solid var(--color-border, #e2e8f0);
+    color: var(--color-foreground-muted, #64748b);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    padding: 0;
+}
+
+.ai-float-plus:hover {
+    background: #f5f3ff;
+    border-color: #7c3aed;
+    color: #7c3aed;
+}
+
+.ai-float-plus svg { width: 20px; height: 20px; }
+
+/* ===== + 号弹出菜单 ===== */
+.ai-float-plus-menu {
+    position: absolute;
+    bottom: 60px;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border-radius: 12px 12px 0 0;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+    padding: 16px;
+    display: none;
+    gap: 20px;
+    justify-content: center;
+    z-index: 8;
+}
+
+.ai-float-plus-menu.active {
+    display: flex;
+}
+
+.ai-float-plus-menu-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+
+.ai-float-plus-menu-item:hover {
+    opacity: 0.8;
+}
+
+.ai-float-plus-menu-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ai-float-plus-menu-icon svg {
+    width: 24px;
+    height: 24px;
+}
+
+.ai-float-plus-menu-item span {
+    font-size: 0.75rem;
+    color: var(--color-foreground-muted, #64748b);
+}
+
+/* ===== 按住说话按钮 ===== */
+.ai-float-hold-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    height: 34px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: all 0.15s ease;
+    padding: 0;
+}
+
+.ai-float-hold-btn:active,
+.ai-float-hold-btn.pressing {
+    opacity: 0.7;
+}
+
+.ai-float-hold-btn-text {
+    font-size: 15px;
+    font-weight: 500;
+    color: #374151;
+    letter-spacing: 4px;
+    pointer-events: none;
+}
+
+/* ===== 录音浮层 ===== */
+.ai-voice-overlay {
+    position: absolute;
+    bottom: 64px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 160px;
+    padding: 20px 16px;
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    border-radius: 16px;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    z-index: 10;
+    box-shadow: 0 8px 24px rgba(124, 58, 237, 0.35);
+    animation: aiVoiceOverlayIn 0.15s ease;
+}
+
+.ai-voice-overlay.active { display: flex; }
+
+.ai-voice-overlay.cancel {
+    background: linear-gradient(135deg, #ef4444, #f87171);
+    box-shadow: 0 8px 24px rgba(239, 68, 68, 0.35);
+}
+
+@keyframes aiVoiceOverlayIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(10px) scale(0.9); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+
+.ai-voice-overlay .ai-voice-mic-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ai-voice-overlay .ai-voice-mic-icon svg {
+    width: 24px;
+    height: 24px;
+    color: #fff;
+}
+
+.ai-voice-overlay .ai-voice-wave {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    height: 28px;
+}
+
+.ai-voice-overlay .ai-voice-wave-bar {
+    width: 3px;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 2px;
+    animation: aiVoiceWaveBar 0.6s ease-in-out infinite;
+}
+
+.ai-voice-overlay .ai-voice-wave-bar:nth-child(1) { animation-delay: 0s; }
+.ai-voice-overlay .ai-voice-wave-bar:nth-child(2) { animation-delay: 0.08s; }
+.ai-voice-overlay .ai-voice-wave-bar:nth-child(3) { animation-delay: 0.16s; }
+.ai-voice-overlay .ai-voice-wave-bar:nth-child(4) { animation-delay: 0.24s; }
+.ai-voice-overlay .ai-voice-wave-bar:nth-child(5) { animation-delay: 0.32s; }
+.ai-voice-overlay .ai-voice-wave-bar:nth-child(6) { animation-delay: 0.24s; }
+.ai-voice-overlay .ai-voice-wave-bar:nth-child(7) { animation-delay: 0.16s; }
+.ai-voice-overlay .ai-voice-wave-bar:nth-child(8) { animation-delay: 0.08s; }
+
+@keyframes aiVoiceWaveBar {
+    0%, 100% { height: 5px; opacity: 0.4; }
+    50% { height: 22px; opacity: 1; }
+}
+
+.ai-voice-overlay .ai-voice-timer {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+}
+
+.ai-voice-overlay .ai-voice-hint {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 500;
+}
+
+/* ===== 半透明遮罩 ===== */
+.ai-voice-backdrop {
+    position: absolute;
+    top: 56px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.12);
+    z-index: 5;
+    display: none;
+    cursor: pointer;
+}
+
+.ai-voice-backdrop.active { display: block; }
+
+/* 语音移动端适配 */
+@media (max-width: 768px) {
+    .ai-voice-overlay {
+        width: 150px;
+        padding: 16px 14px;
+    }
+    .ai-float-hold-btn { height: 44px; }
+}
 </style>
 
 <div class="ai-float-btn" id="aiFloatBtn" title="AI 助手">
@@ -755,16 +1021,89 @@ body.dark .ai-float-email-success {
         </div>
     </div>
 
-    <div class="ai-float-input-area">
-        <div class="ai-float-input-wrap">
-            <textarea class="ai-float-input" id="aiFloatInput" rows="1" placeholder="输入你的问题..."></textarea>
+    <div class="ai-float-input-area" id="aiFloatInputArea">
+        <div class="ai-float-input-row">
+            <!-- 左侧：模式切换按钮 -->
+            <button class="ai-float-toggle" id="aiFloatToggleVoice" title="切换到语音输入">
+                <svg class="icon-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                    <line x1="12" y1="19" x2="12" y2="23"/>
+                    <line x1="8" y1="23" x2="16" y2="23"/>
+                </svg>
+                <svg class="icon-keyboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+                    <rect x="2" y="4" width="20" height="16" rx="2"/>
+                    <line x1="6" y1="8" x2="6" y2="8.01"/><line x1="10" y1="8" x2="10" y2="8.01"/>
+                    <line x1="14" y1="8" x2="14" y2="8.01"/><line x1="18" y1="8" x2="18" y2="8.01"/>
+                    <line x1="6" y1="12" x2="6" y2="12.01"/><line x1="10" y1="12" x2="10" y2="12.01"/>
+                    <line x1="14" y1="12" x2="14" y2="12.01"/><line x1="18" y1="12" x2="18" y2="12.01"/>
+                    <line x1="8" y1="16" x2="16" y2="16"/>
+                </svg>
+            </button>
+            <!-- 中间：文字输入 / 按住说话 -->
+            <div class="ai-float-input-middle">
+                <div class="ai-float-text-area" id="aiFloatTextMode">
+                    <textarea class="ai-float-input" id="aiFloatInput" rows="1" placeholder="输入你的问题..."></textarea>
+                </div>
+                <div class="ai-float-voice-area" id="aiFloatVoiceMode" style="display:none;">
+                    <button class="ai-float-hold-btn" id="aiFloatHoldBtn">
+                        <span class="ai-float-hold-btn-text">按住 说话</span>
+                    </button>
+                </div>
+            </div>
+            <!-- 右侧：发送按钮（文字模式）+ 加号按钮（始终显示） -->
             <button class="ai-float-send" id="aiFloatSend" disabled title="发送">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="22" y1="2" x2="11" y2="13"/>
                     <polygon points="22 2 15 22 11 13 2 9 22 2"/>
                 </svg>
             </button>
+            <button class="ai-float-plus" id="aiFloatPlus" title="更多功能">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+            </button>
         </div>
+        <!-- 加号按钮弹出菜单 -->
+        <div class="ai-float-plus-menu" id="aiFloatPlusMenu">
+            <div class="ai-float-plus-menu-item" data-action="photo">
+                <div class="ai-float-plus-menu-icon" style="background:#7c3aed;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+                        <polyline points="21 15 16 10 5 21"/>
+                    </svg>
+                </div>
+                <span>上传图片</span>
+            </div>
+            <div class="ai-float-plus-menu-item" data-action="file">
+                <div class="ai-float-plus-menu-icon" style="background:#f97316;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                </div>
+                <span>上传文件</span>
+            </div>
+        </div>
+        <!-- 录音浮层 -->
+        <div class="ai-voice-overlay" id="aiVoiceOverlay">
+            <div class="ai-voice-mic-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                </svg>
+            </div>
+            <div class="ai-voice-wave">
+                <div class="ai-voice-wave-bar"></div><div class="ai-voice-wave-bar"></div>
+                <div class="ai-voice-wave-bar"></div><div class="ai-voice-wave-bar"></div>
+                <div class="ai-voice-wave-bar"></div><div class="ai-voice-wave-bar"></div>
+                <div class="ai-voice-wave-bar"></div><div class="ai-voice-wave-bar"></div>
+            </div>
+            <div class="ai-voice-timer" id="aiVoiceTimer">0:00</div>
+            <div class="ai-voice-hint" id="aiVoiceHint">松开 发送</div>
+        </div>
+        <div class="ai-voice-backdrop" id="aiVoiceBackdrop"></div>
     </div>
 </div>
 
@@ -1189,6 +1528,311 @@ body.dark .ai-float-email-success {
                 scrollToBottom();
             }
         } catch (e) {}
+    }
+
+    // ========== 语音输入功能 ==========
+    var textMode = document.getElementById('aiFloatTextMode');
+    var voiceMode = document.getElementById('aiFloatVoiceMode');
+    var toggleBtn = document.getElementById('aiFloatToggleVoice');
+    var iconMic = toggleBtn.querySelector('.icon-mic');
+    var iconKeyboard = toggleBtn.querySelector('.icon-keyboard');
+    var holdBtn = document.getElementById('aiFloatHoldBtn');
+    var voiceOverlay = document.getElementById('aiVoiceOverlay');
+    var voiceTimerEl = document.getElementById('aiVoiceTimer');
+    var voiceHintEl = document.getElementById('aiVoiceHint');
+    var voiceBackdrop = document.getElementById('aiVoiceBackdrop');
+    var plusBtn = document.getElementById('aiFloatPlus');
+    var plusMenu = document.getElementById('aiFloatPlusMenu');
+
+    var recognition = null;
+    var recordingStartTime = 0;
+    var recordingTimerInterval = null;
+    var recordingSafetyTimer = null;
+    var isRecording = false;
+    var isCancelled = false;
+    var userStopped = false;
+    var touchStartY = 0;
+    var voiceModeActive = false;
+    var finalTranscript = '';
+
+    // 模式切换（🎤 ↔ ⌨️）
+    toggleBtn.addEventListener('click', function() {
+        voiceModeActive = !voiceModeActive;
+        if (voiceModeActive) {
+            textMode.style.display = 'none';
+            voiceMode.style.display = 'flex';
+            sendBtn.style.display = 'none';
+            iconMic.style.display = 'none';
+            iconKeyboard.style.display = 'block';
+        } else {
+            voiceMode.style.display = 'none';
+            textMode.style.display = 'flex';
+            sendBtn.style.display = 'flex';
+            iconMic.style.display = 'block';
+            iconKeyboard.style.display = 'none';
+            input.focus();
+        }
+        plusMenu.classList.remove('active');
+    });
+
+    // + 号按钮菜单
+    plusBtn.addEventListener('click', function() {
+        plusMenu.classList.toggle('active');
+    });
+
+    // 点击其他区域关闭菜单
+    document.addEventListener('click', function(e) {
+        if (!plusBtn.contains(e.target) && !plusMenu.contains(e.target)) {
+            plusMenu.classList.remove('active');
+        }
+    });
+
+    // 菜单项点击
+    var menuItems = plusMenu.querySelectorAll('.ai-float-plus-menu-item');
+    for (var i = 0; i < menuItems.length; i++) {
+        menuItems[i].addEventListener('click', function() {
+            var action = this.getAttribute('data-action');
+            plusMenu.classList.remove('active');
+            if (action === 'photo') {
+                // 触发图片上传
+                var fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.accept = 'image/*';
+                fileInput.onchange = function() {
+                    if (this.files && this.files[0]) {
+                        addMsg('已选择图片：' + this.files[0].name, 'user', true);
+                    }
+                };
+                fileInput.click();
+            } else if (action === 'file') {
+                // 触发文件上传
+                var fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.onchange = function() {
+                    if (this.files && this.files[0]) {
+                        addMsg('已选择文件：' + this.files[0].name, 'user', true);
+                    }
+                };
+                fileInput.click();
+            }
+        });
+    }
+
+    // 遮罩点击取消录音
+    voiceBackdrop.addEventListener('click', function() {
+        if (isRecording) stopRecording(true);
+    });
+
+    // 按住说话 - 触摸事件
+    holdBtn.addEventListener('touchstart', function(e) {
+        e.preventDefault();
+        if (isGenerating) return;
+        touchStartY = e.touches[0].clientY;
+        startRecording();
+    });
+
+    // touchmove 和 touchend 绑在 document 上，防止手指滑出按钮区域后事件丢失
+    document.addEventListener('touchmove', function(e) {
+        if (!isRecording) return;
+        var dy = e.touches[0].clientY - touchStartY;
+        if (dy < -60) {
+            voiceOverlay.classList.add('cancel');
+            voiceHintEl.textContent = '松开 取消';
+        } else {
+            voiceOverlay.classList.remove('cancel');
+            voiceHintEl.textContent = '松开 发送';
+        }
+    }, { passive: true });
+
+    document.addEventListener('touchend', function(e) {
+        if (!isRecording) return;
+        var cancelled = voiceOverlay.classList.contains('cancel');
+        stopRecording(cancelled);
+    });
+
+    document.addEventListener('touchcancel', function(e) {
+        if (!isRecording) return;
+        stopRecording(true);
+    });
+
+    // 按住说话 - 鼠标事件
+    holdBtn.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        if (isGenerating) return;
+        touchStartY = e.clientY;
+        startRecording();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!isRecording) return;
+        var dy = e.clientY - touchStartY;
+        if (dy < -60) {
+            voiceOverlay.classList.add('cancel');
+            voiceHintEl.textContent = '松开 取消';
+        } else {
+            voiceOverlay.classList.remove('cancel');
+            voiceHintEl.textContent = '松开 发送';
+        }
+    });
+
+    document.addEventListener('mouseup', function(e) {
+        if (!isRecording) return;
+        var cancelled = voiceOverlay.classList.contains('cancel');
+        stopRecording(cancelled);
+    });
+
+    // 发送音效（类似微信"嗖"的声音）
+    function playSendSound() {
+        try {
+            var ctx = new (window.AudioContext || window.webkitAudioContext)();
+            var osc = ctx.createOscillator();
+            var gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(800, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1600, ctx.currentTime + 0.08);
+            gain.gain.setValueAtTime(0.3, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.15);
+            setTimeout(function() { ctx.close(); }, 200);
+        } catch(e) {}
+    }
+
+    function setupRecognition() {
+        recognition.lang = 'zh-CN';
+        recognition.continuous = true;
+        recognition.interimResults = true;
+
+        recognition.onresult = function(event) {
+            var interim = '';
+            finalTranscript = '';
+            for (var i = 0; i < event.results.length; i++) {
+                if (event.results[i].isFinal) {
+                    finalTranscript += event.results[i][0].transcript;
+                } else {
+                    interim += event.results[i][0].transcript;
+                }
+            }
+        };
+
+        recognition.onerror = function(event) {
+            if (event.error === 'no-speech' || event.error === 'aborted') {
+                return;
+            }
+            if (event.error === 'not-allowed') {
+                addMsg('麦克风权限被拒绝，请在浏览器设置中允许麦克风访问。', 'ai', true);
+            } else if (event.error === 'network') {
+                addMsg('网络错误，语音识别需要网络连接。', 'ai', true);
+            } else {
+                addMsg('语音识别出错：' + event.error, 'ai', true);
+            }
+        };
+
+        recognition.onend = function() {
+            // 用户还没松开按钮，自动重启识别（处理停顿）
+            if (isRecording && !userStopped) {
+                var restarted = false;
+                try {
+                    recognition.start();
+                    restarted = true;
+                } catch(e) {
+                    try {
+                        recognition = new SpeechRecognition();
+                        setupRecognition();
+                        recognition.start();
+                        restarted = true;
+                    } catch(e2) {}
+                }
+                if (restarted) return;
+            }
+
+            // 用户已松开按钮，处理结果
+            isRecording = false;
+            if (isCancelled) {
+                // 取消，不做任何事
+            } else if (finalTranscript.trim()) {
+                playSendSound();
+                var welcome = document.getElementById('aiFloatWelcome');
+                if (welcome) welcome.remove();
+                input.value = finalTranscript.trim();
+                input.style.height = 'auto';
+                input.style.height = Math.min(input.scrollHeight, 80) + 'px';
+                sendBtn.disabled = false;
+                sendMsg();
+            } else {
+                addMsg('未识别到语音内容，请重试。', 'ai', true);
+            }
+        };
+    }
+
+    function startRecording() {
+        var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+            if (isIOS) {
+                addMsg('iOS 浏览器不支持语音识别，请使用 Chrome 或 Edge 浏览器。', 'ai', true);
+            } else {
+                addMsg('您的浏览器不支持语音识别，请使用 Chrome 或 Edge 浏览器。', 'ai', true);
+            }
+            return;
+        }
+
+        isCancelled = false;
+        userStopped = false;
+        finalTranscript = '';
+
+        recognition = new SpeechRecognition();
+        setupRecognition();
+
+        try {
+            recognition.start();
+        } catch(e) {
+            addMsg('语音识别启动失败，请重试。', 'ai', true);
+            return;
+        }
+
+        isRecording = true;
+        recordingStartTime = Date.now();
+        voiceOverlay.classList.add('active');
+        voiceBackdrop.classList.add('active');
+        voiceHintEl.textContent = '松开 发送';
+        updateRecordingTimer();
+
+        // 安全超时：60秒后自动停止，防止卡死
+        recordingSafetyTimer = setTimeout(function() {
+            if (isRecording) stopRecording(false);
+        }, 60000);
+    }
+
+    function stopRecording(cancel) {
+        isCancelled = cancel;
+        userStopped = true;
+        clearTimeout(recordingTimerInterval);
+        clearTimeout(recordingSafetyTimer);
+        voiceOverlay.classList.remove('active', 'cancel');
+        voiceBackdrop.classList.remove('active');
+
+        if (recognition) {
+            try {
+                recognition.stop();
+            } catch(e) {
+                isRecording = false;
+            }
+        } else {
+            isRecording = false;
+        }
+    }
+
+    function updateRecordingTimer() {
+        var elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+        var min = Math.floor(elapsed / 60);
+        var sec = elapsed % 60;
+        voiceTimerEl.textContent = min + ':' + (sec < 10 ? '0' : '') + sec;
+        if (isRecording) {
+            recordingTimerInterval = setTimeout(updateRecordingTimer, 200);
+        }
     }
 
     loadHistory();
