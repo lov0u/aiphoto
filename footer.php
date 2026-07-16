@@ -769,6 +769,16 @@ body.dark .ai-float-email-success {
 
 .ai-float-plus svg { width: 20px; height: 20px; }
 
+.ai-float-plus.stop-mode {
+    background: #ef4444 !important;
+    border-color: #ef4444 !important;
+    color: #fff !important;
+}
+
+.ai-float-plus.stop-mode:hover {
+    background: #dc2626 !important;
+}
+
 /* ===== + 号弹出菜单 ===== */
 .ai-float-plus-menu {
     position: absolute;
@@ -1059,9 +1069,12 @@ body.dark .ai-float-email-success {
                 </svg>
             </button>
             <button class="ai-float-plus" id="aiFloatPlus" title="更多功能">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg class="icon-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="12" y1="5" x2="12" y2="19"/>
                     <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                <svg class="icon-stop" viewBox="0 0 24 24" fill="currentColor" style="display:none;">
+                    <rect x="6" y="6" width="12" height="12" rx="2"/>
                 </svg>
             </button>
         </div>
@@ -1118,6 +1131,7 @@ body.dark .ai-float-email-success {
     var sendBtn = document.getElementById('aiFloatSend');
     var isOpen = false;
     var isGenerating = false;
+    var chatAbortController = null;
     var conversationHistory = [];
     var STORAGE_KEY = 'aiphoto_float_chat';
 
@@ -1483,35 +1497,90 @@ body.dark .ai-float-email-success {
         }
 
         isGenerating = true;
-        var loadingId = addLoading();
+        plusBtn.classList.add('stop-mode');
+        plusBtn.querySelector('.icon-plus').style.display = 'none';
+        plusBtn.querySelector('.icon-stop').style.display = 'block';
 
-        fetch(aiphotoAjax.url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'action=aiphoto_chat&nonce=' + encodeURIComponent(aiphotoAjax.nonce) +
-                  '&message=' + encodeURIComponent(msg) +
-                  '&history=' + encodeURIComponent(JSON.stringify(conversationHistory.slice(-10)))
-        })
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            removeLoading(loadingId);
-            if (data.success) {
-                addMsg(data.data.reply, 'ai', true);
-                conversationHistory.push({ role: 'assistant', content: data.data.reply });
-            } else {
-                addMsg(data.data.message || '抱歉，发生了错误，请重试。', 'ai', true);
-            }
-        })
-        .catch(function() {
-            removeLoading(loadingId);
-            addMsg('网络错误，请检查网络连接后重试。', 'ai', true);
-        })
-        .finally(function() {
+        // 创建 AI 消息气泡（流式填充）
+        var aiDiv = document.createElement('div');
+        aiDiv.className = 'ai-float-msg ai-float-msg--ai';
+        aiDiv.innerHTML = '<div class="ai-float-bubble"></div>';
+        messages.appendChild(aiDiv);
+        var aiBubble = aiDiv.querySelector('.ai-float-bubble');
+        scrollToBottom();
+
+        var fullReply = '';
+        var abortController = new AbortController();
+        chatAbortController = abortController;
+
+        var streamUrl = aiphotoAjax.url + '?action=aiphoto_chat_stream&nonce=' +
+            encodeURIComponent(aiphotoAjax.nonce) +
+            '&message=' + encodeURIComponent(msg) +
+            '&history=' + encodeURIComponent(JSON.stringify(conversationHistory.slice(-10)));
+
+        fetch(streamUrl, { signal: abortController.signal })
+            .then(function(response) {
+                var reader = response.body.getReader();
+                var decoder = new TextDecoder();
+                var buffer = '';
+
+                function read() {
+                    return reader.read().then(function(result) {
+                        if (result.done) return;
+                        buffer += decoder.decode(result.value, { stream: true });
+                        var lines = buffer.split('\n');
+                        buffer = lines.pop();
+                        for (var i = 0; i < lines.length; i++) {
+                            var line = lines[i].trim();
+                            if (line.indexOf('data: ') !== 0) continue;
+                            var jsonStr = line.substring(6);
+                            if (jsonStr === '[DONE]') {
+                                finishStream(fullReply);
+                                return;
+                            }
+                            try {
+                                var data = JSON.parse(jsonStr);
+                                if (data.error) {
+                                    aiBubble.innerHTML = formatText(data.error);
+                                    finishStream('');
+                                    return;
+                                }
+                                if (data.text) {
+                                    fullReply += data.text;
+                                    aiBubble.innerHTML = formatText(fullReply);
+                                    scrollToBottom();
+                                }
+                            } catch(e) {}
+                        }
+                        return read();
+                    });
+                }
+                return read();
+            })
+            .catch(function(err) {
+                if (err.name === 'AbortError') {
+                    if (fullReply) { finishStream(fullReply); }
+                    else { aiDiv.remove(); }
+                    return;
+                }
+                aiBubble.innerHTML = formatText('网络错误，请检查网络连接后重试。');
+                finishStream('');
+            });
+
+        function finishStream(reply) {
             isGenerating = false;
+            plusBtn.classList.remove('stop-mode');
+            plusBtn.querySelector('.icon-plus').style.display = 'block';
+            plusBtn.querySelector('.icon-stop').style.display = 'none';
+            chatAbortController = null;
+            if (reply) {
+                conversationHistory.push({ role: 'assistant', content: reply });
+                playSendSound();
+            }
             sendBtn.disabled = input.value.trim().length === 0;
             input.focus();
             saveHistory();
-        });
+        }
     }
 
     // ========== 初始化 ==========
@@ -1577,7 +1646,17 @@ body.dark .ai-float-email-success {
 
     // + 号按钮菜单
     plusBtn.addEventListener('click', function() {
-        plusMenu.classList.toggle('active');
+        if (isGenerating && chatAbortController) {
+            chatAbortController.abort();
+            isGenerating = false;
+            plusBtn.classList.remove('stop-mode');
+            plusBtn.querySelector('.icon-plus').style.display = 'block';
+            plusBtn.querySelector('.icon-stop').style.display = 'none';
+            var loadingEl = messages.querySelector('.ai-float-typing');
+            if (loadingEl) loadingEl.closest('.ai-float-msg').remove();
+        } else {
+            plusMenu.classList.toggle('active');
+        }
     });
 
     // 点击其他区域关闭菜单
@@ -1692,7 +1771,7 @@ body.dark .ai-float-email-success {
             osc.type = 'sine';
             osc.frequency.setValueAtTime(800, ctx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(1600, ctx.currentTime + 0.08);
-            gain.gain.setValueAtTime(0.3, ctx.currentTime);
+            gain.gain.setValueAtTime(0.8, ctx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
             osc.start(ctx.currentTime);
             osc.stop(ctx.currentTime + 0.15);
@@ -1700,139 +1779,157 @@ body.dark .ai-float-email-success {
         } catch(e) {}
     }
 
-    function setupRecognition() {
+    var mediaRecorder = null;
+    var audioChunks = [];
+    var useVosk = false;
+
+    function getSupportedMimeType() {
+        var types = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4'];
+        for (var i = 0; i < types.length; i++) { if (MediaRecorder.isTypeSupported(types[i])) return types[i]; }
+        return '';
+    }
+
+    function startRecording() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            addMsg('您的浏览器不支持录音功能，请使用 Chrome 或 Edge 浏览器。', 'ai', true); return;
+        }
+        isCancelled = false; userStopped = false; audioChunks = [];
+        var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SR && !useVosk) {
+            startSpeechRecognition(SR);
+        } else {
+            startMediaRecorder();
+        }
+    }
+
+    function startSpeechRecognition(SR) {
+        recognition = new SR();
         recognition.lang = 'zh-CN';
-        recognition.continuous = true;
-        recognition.interimResults = true;
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        var gotResult = false;
 
         recognition.onresult = function(event) {
-            var interim = '';
-            finalTranscript = '';
-            for (var i = 0; i < event.results.length; i++) {
-                if (event.results[i].isFinal) {
-                    finalTranscript += event.results[i][0].transcript;
-                } else {
-                    interim += event.results[i][0].transcript;
+            gotResult = true;
+            if (event.results[0] && event.results[0][0]) {
+                var text = event.results[0][0].transcript;
+                if (text.trim()) {
+                    playSendSound();
+                    var welcome = document.getElementById('aiFloatWelcome');
+                    if (welcome) welcome.remove();
+                    input.value = text.trim();
+                    input.style.height = 'auto';
+                    input.style.height = Math.min(input.scrollHeight, 80) + 'px';
+                    sendBtn.disabled = false;
+                    sendMsg();
+                    isRecording = false;
+                    voiceOverlay.classList.remove('active');
+                    voiceBackdrop.classList.remove('active');
+                    return;
                 }
             }
+            useVosk = true; isRecording = false; startMediaRecorder();
         };
 
         recognition.onerror = function(event) {
             if (event.error === 'no-speech' || event.error === 'aborted') {
+                if (!gotResult) { useVosk = true; isRecording = false; startMediaRecorder(); }
                 return;
             }
-            if (event.error === 'not-allowed') {
-                addMsg('麦克风权限被拒绝，请在浏览器设置中允许麦克风访问。', 'ai', true);
-            } else if (event.error === 'network') {
-                addMsg('网络错误，语音识别需要网络连接。', 'ai', true);
-            } else {
-                addMsg('语音识别出错：' + event.error, 'ai', true);
-            }
+            useVosk = true; isRecording = false; startMediaRecorder();
         };
 
         recognition.onend = function() {
-            // 用户还没松开按钮，自动重启识别（处理停顿）
-            if (isRecording && !userStopped) {
-                var restarted = false;
-                try {
-                    recognition.start();
-                    restarted = true;
-                } catch(e) {
-                    try {
-                        recognition = new SpeechRecognition();
-                        setupRecognition();
-                        recognition.start();
-                        restarted = true;
-                    } catch(e2) {}
-                }
-                if (restarted) return;
-            }
-
-            // 用户已松开按钮，处理结果
-            isRecording = false;
-            if (isCancelled) {
-                // 取消，不做任何事
-            } else if (finalTranscript.trim()) {
-                playSendSound();
-                var welcome = document.getElementById('aiFloatWelcome');
-                if (welcome) welcome.remove();
-                input.value = finalTranscript.trim();
-                input.style.height = 'auto';
-                input.style.height = Math.min(input.scrollHeight, 80) + 'px';
-                sendBtn.disabled = false;
-                sendMsg();
-            } else {
-                addMsg('未识别到语音内容，请重试。', 'ai', true);
-            }
+            if (!gotResult && isRecording) { useVosk = true; isRecording = false; startMediaRecorder(); }
         };
-    }
-
-    function startRecording() {
-        var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-            var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-            if (isIOS) {
-                addMsg('iOS 浏览器不支持语音识别，请使用 Chrome 或 Edge 浏览器。', 'ai', true);
-            } else {
-                addMsg('您的浏览器不支持语音识别，请使用 Chrome 或 Edge 浏览器。', 'ai', true);
-            }
-            return;
-        }
-
-        isCancelled = false;
-        userStopped = false;
-        finalTranscript = '';
-
-        recognition = new SpeechRecognition();
-        setupRecognition();
 
         try {
+            isRecording = true; recordingStartTime = Date.now();
+            voiceOverlay.classList.add('active'); voiceBackdrop.classList.add('active');
+            voiceHintEl.textContent = '松开 发送'; updateRecordingTimer();
             recognition.start();
+            recordingSafetyTimer = setTimeout(function() {
+                if (isRecording && !gotResult) {
+                    try { recognition.stop(); } catch(e) {}
+                    useVosk = true; isRecording = false; startMediaRecorder();
+                }
+            }, 8000);
         } catch(e) {
-            addMsg('语音识别启动失败，请重试。', 'ai', true);
-            return;
+            useVosk = true; isRecording = false; startMediaRecorder();
         }
+    }
 
-        isRecording = true;
-        recordingStartTime = Date.now();
-        voiceOverlay.classList.add('active');
-        voiceBackdrop.classList.add('active');
-        voiceHintEl.textContent = '松开 发送';
-        updateRecordingTimer();
-
-        // 安全超时：60秒后自动停止，防止卡死
-        recordingSafetyTimer = setTimeout(function() {
-            if (isRecording) stopRecording(false);
-        }, 60000);
+    function startMediaRecorder() {
+        navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
+            var mimeType = getSupportedMimeType();
+            mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType: mimeType }) : new MediaRecorder(stream);
+            mediaRecorder.ondataavailable = function(e) { if (e.data.size > 0) audioChunks.push(e.data); };
+            mediaRecorder.onstop = function() {
+                stream.getTracks().forEach(function(t) { t.stop(); });
+                if (!isCancelled && audioChunks.length > 0) {
+                    var blob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+                    sendToVosk(blob);
+                }
+                isRecording = false;
+                voiceOverlay.classList.remove('active', 'cancel');
+                voiceBackdrop.classList.remove('active');
+            };
+            isRecording = true; recordingStartTime = Date.now();
+            voiceOverlay.classList.add('active'); voiceBackdrop.classList.add('active');
+            voiceHintEl.textContent = '松开 发送'; updateRecordingTimer();
+            mediaRecorder.start();
+            recordingSafetyTimer = setTimeout(function() { if (isRecording) stopRecording(false); }, 60000);
+        }).catch(function() {
+            addMsg('无法访问麦克风，请检查浏览器权限设置。', 'ai', true);
+            voiceOverlay.classList.remove('active'); voiceBackdrop.classList.remove('active');
+        });
     }
 
     function stopRecording(cancel) {
-        isCancelled = cancel;
-        userStopped = true;
-        clearTimeout(recordingTimerInterval);
-        clearTimeout(recordingSafetyTimer);
+        isCancelled = cancel; userStopped = true;
+        clearTimeout(recordingTimerInterval); clearTimeout(recordingSafetyTimer);
         voiceOverlay.classList.remove('active', 'cancel');
         voiceBackdrop.classList.remove('active');
-
-        if (recognition) {
-            try {
-                recognition.stop();
-            } catch(e) {
-                isRecording = false;
-            }
-        } else {
-            isRecording = false;
-        }
+        if (recognition) { try { recognition.stop(); } catch(e) {} recognition = null; }
+        if (mediaRecorder && mediaRecorder.state === 'recording') { mediaRecorder.stop(); }
+        else { isRecording = false; }
     }
 
     function updateRecordingTimer() {
-        var elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
-        var min = Math.floor(elapsed / 60);
-        var sec = elapsed % 60;
-        voiceTimerEl.textContent = min + ':' + (sec < 10 ? '0' : '') + sec;
-        if (isRecording) {
-            recordingTimerInterval = setTimeout(updateRecordingTimer, 200);
-        }
+        var e = Math.floor((Date.now() - recordingStartTime) / 1000);
+        voiceTimerEl.textContent = Math.floor(e/60) + ':' + (e%60 < 10 ? '0' : '') + (e%60);
+        if (isRecording) recordingTimerInterval = setTimeout(updateRecordingTimer, 200);
+    }
+
+    function sendToVosk(blob) {
+        var reader = new FileReader();
+        reader.onload = function() {
+            var base64 = reader.result.split(',')[1];
+            var loadingId = addLoading();
+            fetch(aiphotoAjax.url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'action=aiphoto_recognize_speech&nonce=' + encodeURIComponent(aiphotoAjax.nonce) + '&audio=' + encodeURIComponent(base64)
+            }).then(function(r) { return r.json(); }).then(function(data) {
+                removeLoading(loadingId);
+                if (data.success && data.data.text && data.data.text.trim()) {
+                    playSendSound();
+                    var welcome = document.getElementById('aiFloatWelcome');
+                    if (welcome) welcome.remove();
+                    input.value = data.data.text.trim();
+                    input.style.height = 'auto';
+                    input.style.height = Math.min(input.scrollHeight, 80) + 'px';
+                    sendBtn.disabled = false;
+                    sendMsg();
+                } else {
+                    addMsg('未识别到语音内容，请重试。', 'ai', true);
+                }
+            }).catch(function() {
+                removeLoading(loadingId);
+                addMsg('语音识别服务连接失败，请稍后重试。', 'ai', true);
+            });
+        };
+        reader.readAsDataURL(blob);
     }
 
     loadHistory();
