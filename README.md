@@ -1,5 +1,8 @@
 # Aiphoto - WordPress AI 图片展示主题
 ![AIPhoto](README-banner.png)
+**🌐 主站：[ra0.cn](https://ra0.cn)** | **🎨 AI 图片站：[aiphoto.ra0.cn](https://aiphoto.ra0.cn)**
+
+由[]用心打造(https://aiphoto.ra0.cn)
 一个现代化的 WordPress 主题，专注于 AI 生成图片的展示与在线创作。
 
 ## 功能特性
@@ -28,11 +31,11 @@
 
 ### 3. 配置 API
 
-进入 **设置 → Aiphoto Settings** 配置你的 API：
+**配置你的 API：
 
-- **API Key**: 输入你的 API Key
-- **API Base URL**: 默认 `https://apihub.agnes-ai.com`
-- **Model**: 选择模型（默认 `agnes-image-2.1-flash`）
+- **API 密钥**: 输入你的 API 密钥
+- **API 基础 URL**: 默认`https://apihub.agnes-ai.com`
+**: 选择模型（默认
 
 ### 4. 创建页面
 
@@ -57,23 +60,23 @@
 
 主题支持任何兼容 OpenAI 接口的 API，包括：
 
-- Agnes AI (默认)
+-Agnes AI（默认）
 - OpenAI DALL-E 3
 - OpenAI DALL-E 2
-- Stable Diffusion (通过兼容接口)
+-Stable Diffusion（通过兼容接口）
 - 其他 OpenAI 兼容的图片生成 API
 
 ## 设计系统
 
 ### 配色
 
-| Token | Value | 用途 |
+|标记|值|用途|
 |-------|-------|------|
-| Primary | `#7c3aed` | 品牌色（紫色） |
+|主色| `#7c3aed` |品牌色（紫色）|
 | Accent | `#F97316` | 强调色（珊瑚橙） |
 | Background | `#ffffff` | 白色背景 |
 | Surface | `#f8fafc` | 卡片表面 |
-| Foreground | `#0f172a` | 主要文字 |
+|前景| `#0f172a` |主要文字|
 | Border | `#e2e8f0` | 边框颜色 |
 
 ### 字体
@@ -124,7 +127,7 @@ aiphoto-theme/
 
 ## 许可证
 
-GNU General Public License v2 or later
+GNU通用公共许可证第2版或更高版本
 
 ## 贡献
 
@@ -148,7 +151,7 @@ GNU General Public License v2 or later
 - 修复文生图保存到媒体库的问题
 - 改进图生图功能
 
-### v2.0.0 (2026-07-14)
+###v2.0.0（2026-07-14）
 
 - 全新白色主题设计
 - 新增图生图功能
