@@ -1,0 +1,22 @@
+/* ============================================
+   AIPhoto - Editor Styles (Gutenberg)
+   Makes the block editor match the frontend theme
+   ============================================ */
+
+body {
+    background: #ffffff;
+    color: #1a1a1a;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+body .editor-styles-wrapper {
+    max-width: 1200px;
+}
+
+body h1, body h2, body h3, body h4, body h5, body h6 {
+    color: #0F172A;
+}
+
+body p {
+    color: #555555;
+}

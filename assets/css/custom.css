@@ -1,0 +1,93 @@
+/* ============================================
+   AIPhoto - Custom Additional Styles
+   Extra styles for gallery, admin, and utilities
+   ============================================ */
+
+/* ============================================
+   GALLERY PAGE SPECIFIC
+   ============================================ */
+.gallery-page .gallery-section {
+    padding-top: 120px;
+}
+
+/* ============================================
+   EDITOR STYLES (for Gutenberg)
+   ============================================ */
+.editor-styles-wrapper {
+    --color-bg-base: #ffffff;
+    --color-foreground: #1a1a1a;
+    --color-foreground-muted: #555555;
+}
+
+/* ============================================
+   SKELETON LOADING
+   ============================================ */
+.skeleton {
+    background: linear-gradient(
+        90deg,
+        var(--color-bg-card) 25%,
+        var(--color-bg-hover) 50%,
+        var(--color-bg-card) 75%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s ease-in-out infinite;
+    border-radius: var(--radius-md);
+}
+
+@keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* ============================================
+   SCROLLBAR STYLING
+   ============================================ */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* ============================================
+   SELECTION STYLING
+   ============================================ */
+::selection {
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+@media print {
+    .site-header,
+    .site-footer,
+    .generator-card,
+    .hero-section,
+    .filter-tabs,
+    .load-more-wrapper {
+        display: none !important;
+    }
+
+    body {
+        background: #fff;
+        color: #000;
+    }
+
+    .masonry-item {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+}
