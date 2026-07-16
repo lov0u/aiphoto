@@ -2,15 +2,14 @@
 ![AIPhoto](README-banner.png)
 <div align="center">
 
-**🌐 主站：[ra0.cn](https://ra0.cn)** | **🎨 AI 图片站：[aiphoto.ra0.cn](https://aiphoto.ra0.cn)**
+**🌐 主站：[青衣网络](https://ra0.cn)** | **🎨 AI 图片站：[Aiphoto](https://aiphoto.ra0.cn)**
 
-Made with ❤️ by [Aiphoto](https://aiphoto.ra0.cn)
+由]用心打造(https://aiphoto.ra0.cn)
 
 </div>
 
 一个现代化的 WordPress 主题，专注于 AI 生成图片的展示与在线创作。
 
-![AIPhoto](README-banner.png)
 
 ## 功能特性
 
