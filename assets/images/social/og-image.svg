@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f8fafc"/>
+      <stop offset="100%" style="stop-color:#ffffff"/>
+    </linearGradient>
+    <linearGradient id="purple" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7c3aed"/>
+      <stop offset="100%" style="stop-color:#6d28d9"/>
+    </linearGradient>
+    <linearGradient id="orange" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f97316"/>
+      <stop offset="100%" style="stop-color:#ea580c"/>
+    </linearGradient>
+    <linearGradient id="footer" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#7c3aed"/>
+      <stop offset="100%" style="stop-color:#f97316"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="24" flood-color="#000000" flood-opacity="0.08"/>
+    </filter>
+  </defs>
+  
+  <!-- 背景 -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  
+  <!-- 顶部装饰圆 -->
+  <circle cx="100" cy="100" r="300" fill="#7c3aed" opacity="0.03"/>
+  <circle cx="1100" cy="500" r="250" fill="#f97316" opacity="0.03"/>
+  
+  <!-- 主图区域 -->
+  <rect x="100" y="40" width="1000" height="400" rx="16" fill="#f1f5f9" filter="url(#shadow)"/>
+  
+  <!-- 松树图片占位 - 用渐变色块模拟 -->
+  <rect x="100" y="40" width="1000" height="400" rx="16" fill="url(#purple)" opacity="0.1"/>
+  
+  <!-- 画布上的松树元素 -->
+  <g transform="translate(500, 180)">
+    <!-- 树干 -->
+    <path d="M0,100 Q-30,50 -60,-20 Q-80,-60 -40,-100 Q-20,-120 0,-130 Q20,-120 40,-100 Q80,-60 60,-20 Q30,50 0,100Z" fill="#5c3a1e" opacity="0.8"/>
+    <!-- 树枝 -->
+    <path d="M-20,-60 Q-80,-80 -120,-60 Q-140,-40 -120,-20 Q-100,0 -60,-10 Q-30,-15 -20,-30" fill="none" stroke="#4a7c59" stroke-width="20" stroke-linecap="round" opacity="0.7"/>
+    <path d="M20,-80 Q80,-100 120,-80 Q140,-60 120,-40 Q100,-20 60,-30 Q30,-35 20,-55" fill="none" stroke="#4a7c59" stroke-width="20" stroke-linecap="round" opacity="0.7"/>
+    <!-- 树叶 -->
+    <circle cx="-100" cy="-50" r="30" fill="#4a7c59" opacity="0.6"/>
+    <circle cx="100" cy="-70" r="30" fill="#4a7c59" opacity="0.6"/>
+    <circle cx="-40" cy="-110" r="25" fill="#5a8c69" opacity="0.5"/>
+    <circle cx="60" cy="-100" r="25" fill="#5a8c69" opacity="0.5"/>
+  </g>
+  
+  <!-- 水面 -->
+  <ellipse cx="600" cy="420" rx="350" ry="40" fill="#3b82f6" opacity="0.15"/>
+  
+  <!-- 小船 -->
+  <path d="M560,390 Q600,410 640,390" fill="none" stroke="#8b6914" stroke-width="3" opacity="0.6"/>
+  
+  <!-- 山背景 -->
+  <path d="M100,300 Q200,200 300,280 Q400,180 500,260 Q600,160 700,240 Q800,180 900,260 Q1000,200 1100,280 L1100,440 L100,440Z" fill="#64748b" opacity="0.08"/>
+  
+  <!-- 品牌 Logo -->
+  <text x="600" y="520" text-anchor="middle" font-family="Georgia, serif" font-size="48" font-style="italic" fill="url(#purple)" font-weight="bold">Aiphoto</text>
+  
+  <!-- 副标题 -->
+  <text x="600" y="560" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="20" fill="#64748b">用 AI 创造无限可能</text>
+  
+  <!-- 底部条 -->
+  <rect x="0" y="580" width="1200" height="50" fill="url(#footer)"/>
+  
+  <!-- 网站链接 -->
+  <text x="600" y="612" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="16" fill="#ffffff" font-weight="600">aiphoto.ra0.cn  |  ra0.cn</text>
+</svg>
