@@ -849,37 +849,75 @@ $settings = aiphoto_get_settings();
 
         // 显示加载
         isGenerating = true;
-        var loadingId = addLoading();
 
-        // 发送请求
-        fetch(aiphotoAjax.url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'action=aiphoto_chat&nonce=' + encodeURIComponent(aiphotoAjax.nonce) +
-                  '&message=' + encodeURIComponent(message) +
-                  '&history=' + encodeURIComponent(JSON.stringify(conversationHistory.slice(-10)))
-        })
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            removeLoading(loadingId);
-            if (data.success) {
-                addMessageToDOM(data.data.reply, 'ai', true);
-                conversationHistory.push({ role: 'assistant', content: data.data.reply });
-            } else {
-                addMessageToDOM(data.data.message || '抱歉，发生了错误，请重试。', 'ai', true);
-            }
-        })
-        .catch(function(err) {
-            removeLoading(loadingId);
-            addMessageToDOM('网络错误，请检查网络连接后重试。', 'ai', true);
-        })
-        .finally(function() {
+        // 创建 AI 消息气泡（流式填充）
+        var aiDiv = document.createElement('div');
+        aiDiv.className = 'chat-message chat-message--ai';
+        aiDiv.innerHTML = '<div class="chat-bubble"></div>';
+        chatMessages.appendChild(aiDiv);
+        var aiBubble = aiDiv.querySelector('.chat-bubble');
+        scrollToBottom();
+
+        var fullReply = '';
+
+        var streamUrl = aiphotoAjax.url + '?action=aiphoto_chat_stream&nonce=' +
+            encodeURIComponent(aiphotoAjax.nonce) +
+            '&message=' + encodeURIComponent(message) +
+            '&history=' + encodeURIComponent(JSON.stringify(conversationHistory.slice(-10)));
+
+        fetch(streamUrl)
+            .then(function(response) {
+                var reader = response.body.getReader();
+                var decoder = new TextDecoder();
+                var buffer = '';
+
+                function read() {
+                    return reader.read().then(function(result) {
+                        if (result.done) return;
+                        buffer += decoder.decode(result.value, { stream: true });
+                        var lines = buffer.split('\n');
+                        buffer = lines.pop();
+                        for (var i = 0; i < lines.length; i++) {
+                            var line = lines[i].trim();
+                            if (line.indexOf('data: ') !== 0) continue;
+                            var jsonStr = line.substring(6);
+                            if (jsonStr === '[DONE]') {
+                                finishChatStream(fullReply);
+                                return;
+                            }
+                            try {
+                                var data = JSON.parse(jsonStr);
+                                if (data.error) {
+                                    aiBubble.innerHTML = formatMessage(data.error);
+                                    finishChatStream('');
+                                    return;
+                                }
+                                if (data.text) {
+                                    fullReply += data.text;
+                                    aiBubble.innerHTML = formatMessage(fullReply);
+                                    scrollToBottom();
+                                }
+                            } catch(e) {}
+                        }
+                        return read();
+                    });
+                }
+                return read();
+            })
+            .catch(function(err) {
+                aiBubble.innerHTML = formatMessage('网络错误，请检查网络连接后重试。');
+                finishChatStream('');
+            });
+
+        function finishChatStream(reply) {
             isGenerating = false;
             chatSendBtn.disabled = chatInput.value.trim().length === 0;
             chatInput.focus();
-            // 保存对话
-            saveCurrentChat();
-        });
+            if (reply) {
+                conversationHistory.push({ role: 'assistant', content: reply });
+                saveCurrentChat();
+            }
+        }
     }
 
     function addMessageToDOM(text, type, animate, isHtml) {
