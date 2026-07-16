@@ -1776,7 +1776,7 @@ body.dark .ai-float-email-success {
             osc.type = 'sine';
             osc.frequency.setValueAtTime(800, ctx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(1600, ctx.currentTime + 0.08);
-            gain.gain.setValueAtTime(0.8, ctx.currentTime);
+            gain.gain.setValueAtTime(0.6, ctx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
             osc.start(ctx.currentTime);
             osc.stop(ctx.currentTime + 0.15);
