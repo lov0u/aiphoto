@@ -956,8 +956,8 @@ body.dark .ai-float-email-success {
     top: 56px;
     left: 0;
     right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.12);
+    bottom: 60px;
+    background: rgba(0, 0, 0, 0.08);
     z-index: 5;
     display: none;
     cursor: pointer;
