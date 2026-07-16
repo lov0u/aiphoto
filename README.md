@@ -8,12 +8,13 @@
 - **文生图 + 图生图** - 支持纯文本生成和参考图生成
 - **瀑布流画廊** - 响应式 Masonry 布局展示图片
 - **分类筛选** - 支持按分类和风格筛选图片
-- **API 后台配置** - 在 WordPress 后台轻松配置 OpenAI 兼容 API
+- **API 后台配置** - 在 WordPress 后台轻松配置 API
 - **白色主题** - 简洁现代的 AI-Native UI 设计风格
 - **响应式设计** - 完美适配桌面端、平板和手机
 - **灯箱效果** - 点击图片全屏查看
 - **懒加载** - 图片延迟加载提升性能
 - **无障碍访问** - 符合 WCAG AA 标准
+- **AI 聊天** - 内置 AI 智能聊天功能
 
 ## 安装步骤
 
@@ -29,14 +30,16 @@
 
 进入 **设置 → Aiphoto Settings** 配置你的 API：
 
-- **API Key**: 输入你的 OpenAI API Key（以 `sk-` 开头）
-- **API Base URL**: 默认 `https://api.openai.com`，也可使用其他兼容接口
-- **Model**: 选择模型（DALL-E 3 / DALL-E 2 / Stable Diffusion 等）
-- **Image Size**: 选择生成图片的尺寸
+- **API Key**: 输入你的 API Key
+- **API Base URL**: 默认 `https://apihub.agnes-ai.com`
+- **Model**: 选择模型（默认 `agnes-image-2.1-flash`）
 
 ### 4. 创建页面
 
-创建一个新页面，选择 **"Homepage"** 模板作为首页。
+主题会自动创建以下页面：
+- **生成图片** (`/generate`) - AI 图片生成页面
+- **画廊** (`/gallery`) - 图片画廊展示
+- **聊天** (`/chat`) - AI 智能聊天
 
 ### 5. 设置菜单
 
@@ -52,26 +55,13 @@
 
 ## 支持的 API
 
-主题支持任何兼容 OpenAI 接口的 API，包括但不限于：
+主题支持任何兼容 OpenAI 接口的 API，包括：
 
+- Agnes AI (默认)
 - OpenAI DALL-E 3
 - OpenAI DALL-E 2
 - Stable Diffusion (通过兼容接口)
 - 其他 OpenAI 兼容的图片生成 API
-
-### API 请求格式
-
-```json
-{
-    "model": "dall-e-3",
-    "prompt": "描述文字",
-    "n": 1,
-    "size": "1024x1024",
-    "response_format": "url",
-    "quality": "standard",
-    "style": "natural"
-}
-```
 
 ## 设计系统
 
@@ -105,6 +95,7 @@ aiphoto-theme/
 ├── header.php                 # 头部模板
 ├── footer.php                 # 底部模板
 ├── front-page.php             # 首页模板（文生图/图生图/画廊）
+├── page-chat.php              # 聊天页面模板
 ├── page-gallery.php           # 画廊页面模板
 ├── single-ai-photo.php        # 单张图片模板
 ├── assets/
@@ -140,6 +131,13 @@ GNU General Public License v2 or later
 欢迎提交 Issue 和 Pull Request！
 
 ## 更新日志
+
+### v2.1.0 (2026-07-16)
+
+- 修复聊天页面侧边栏布局问题
+- 优化图片压缩算法（WebP 格式，最大边 600px）
+- 修复文生图保存到媒体库的问题
+- 改进图生图功能
 
 ### v2.0.0 (2026-07-14)
 
