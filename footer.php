@@ -1347,11 +1347,11 @@ body.dark .ai-float-email-success {
     // 聊天框内滚动时不滚动页面
     messages.addEventListener('wheel', function(e) {
         var atTop = messages.scrollTop === 0 && e.deltaY < 0;
-        var atBottom = messages.scrollTop + messages.clientHeight >= messages.scrollHeight - 1 && e.deltaY > 0;
-        if (!atTop && !atBottom) {
-            e.stopPropagation();
+        var atBottom = messages.scrollTop + messages.clientHeight >= messages.scrollHeight - 2 && e.deltaY > 0;
+        if (atTop || atBottom) {
+            e.preventDefault();
         }
-    }, { passive: true });
+    }, { passive: false });
 
     // 清空聊天记录
     clearBtn.addEventListener('click', function() {
