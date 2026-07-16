@@ -577,6 +577,37 @@ add_action( 'wp_ajax_aiphoto_chat', 'aiphoto_chat' );
 add_action( 'wp_ajax_nopriv_aiphoto_chat', 'aiphoto_chat' );
 
 /**
+ * 语音识别 - 调用本地 Vosk API
+ */
+function aiphoto_recognize_speech() {
+    $audio = isset( $_POST['audio'] ) ? sanitize_text_field( $_POST['audio'] ) : '';
+    if ( empty( $audio ) ) {
+        wp_send_json_error( array( 'message' => '没有音频数据' ) );
+    }
+
+    $response = wp_remote_post( 'http://127.0.0.1:5000/api/recognize', array(
+        'headers' => array( 'Content-Type' => 'application/json' ),
+        'body' => wp_json_encode( array( 'audio' => $audio ) ),
+        'timeout' => 30,
+    ) );
+
+    if ( is_wp_error( $response ) ) {
+        wp_send_json_error( array( 'message' => '语音识别服务连接失败' ) );
+    }
+
+    $body = wp_remote_retrieve_body( $response );
+    $result = json_decode( $body, true );
+
+    if ( isset( $result['text'] ) && $result['text'] !== '' ) {
+        wp_send_json_success( array( 'text' => $result['text'] ) );
+    } else {
+        wp_send_json_error( array( 'message' => '未识别到语音内容' ) );
+    }
+}
+add_action( 'wp_ajax_aiphoto_recognize_speech', 'aiphoto_recognize_speech' );
+add_action( 'wp_ajax_nopriv_aiphoto_recognize_speech', 'aiphoto_recognize_speech' );
+
+/**
  * AI 助手 - QQ邮箱 SMTP 发送邮件（587端口 STARTTLS）
  */
 function aiphoto_smtp_send( $to, $subject, $body ) {
