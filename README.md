@@ -1,5 +1,5 @@
 # Aiphoto - WordPress AI 图片展示主题
-
+![AIPhoto](README-横幅.png)
 一个现代化的 WordPress 主题，专注于 AI 生成图片的展示与在线创作。
 
 ## 功能特性
