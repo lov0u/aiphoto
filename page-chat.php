@@ -796,8 +796,8 @@ html, body.chat-page {
 .chat-scroll-btn {
     position: absolute;
     bottom: 180px;
-    left: 50%;
-    transform: translateX(-50%);
+    right: 50%;
+    margin-right: -16px;
     width: 32px;
     height: 32px;
     background: #fff;
