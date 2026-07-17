@@ -795,9 +795,10 @@ html, body.chat-page {
 /* 滚动按钮（输入框正上方偏左） */
 .chat-scroll-btn {
     position: absolute;
-    bottom: 180px;
-    right: 50%;
-    margin-right: -16px;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 8px;
     width: 32px;
     height: 32px;
     background: #fff;
@@ -1002,7 +1003,18 @@ html, body.chat-page {
         </div>
 
         <!-- 输入区域（居中） -->
-        <div class="chat-input-area">
+        <div class="chat-input-area" style="position:relative;">
+            <!-- 滚动按钮（输入框正上方居中） -->
+            <button class="chat-scroll-btn" id="scrollBtn">
+                <svg class="arrow-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="19" x2="12" y2="5"/>
+                    <polyline points="5 12 12 5 19 12"/>
+                </svg>
+                <svg class="arrow-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <polyline points="19 12 12 19 5 12"/>
+                </svg>
+            </button>
             <div class="chat-input-container">
                 <div class="chat-input-row">
                     <textarea class="chat-input" id="chatInput" placeholder="分配一个任务或提问任何问题" rows="1"></textarea>
@@ -1037,20 +1049,6 @@ html, body.chat-page {
             </div>
         </div>
     </main>
-
-    <!-- 滚动按钮（双向：上/下） -->
-    <button class="chat-scroll-btn" id="scrollBtn">
-        <!-- 箭头朝上（滚到顶部） -->
-        <svg class="arrow-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="12" y1="19" x2="12" y2="5"/>
-            <polyline points="5 12 12 5 19 12"/>
-        </svg>
-        <!-- 箭头朝下（滚到底部） -->
-        <svg class="arrow-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="12" y1="5" x2="12" y2="19"/>
-            <polyline points="19 12 12 19 5 12"/>
-        </svg>
-    </button>
 
     <!-- 右键菜单 -->
     <div class="chat-context-menu" id="chatContextMenu">
