@@ -384,126 +384,129 @@ function aiphoto_ai_enhance_prompt( $user_prompt, $effect = '', $lens = '', $tem
 
     $api_url = rtrim( $settings['api_base_url'], '/' ) . '/v1/chat/completions';
 
-    // ========== 系统提示词：将我们的 SKILL 规则作为知识库传给 AI ==========
-    $system_prompt = '你是 Aiphoto 的专业图片提示词工程师。你的任务是根据用户输入，结合下方的【SKILL 知识库】规则，生成高质量的英文图片生成提示词。
+    // ========== 系统提示词：AI 分析内容 → 选择合适的 SKILL 规则 ==========
+    $system_prompt = '你是 Aiphoto 的专业图片提示词工程师。你的任务是：
+1. 分析用户输入的内容
+2. 从下方【SKILL 规则库】中选择最相关的规则
+3. 结合用户选择（效果/镜头/模板），生成高质量的英文提示词
+
+## 工作流程
+第一步：分析用户输入，判断属于哪种类型（人像/风景/产品/动漫/奇幻/赛博朋克/水墨/建筑/动物等）
+第二步：从规则库中选择 2-4 条最相关的规则（不要全部使用，只选合适的）
+第三步：结合用户选择的效果/镜头/模板
+第四步：生成最终提示词
 
 ## 核心规则
 1. 输出必须是纯英文，不要包含中文
 2. 保持用户描述的核心意图（主体、场景、动作）
-3. 严格遵循下方 SKILL 知识库中的规则
-4. 不要编造用户没有描述的场景（如用户说"猫"不要加"in a garden"）
+3. 只选择与用户输入相关的 SKILL 规则，不要全部使用
+4. 不要编造用户没有描述的场景
 5. 提示词长度控制在 40-80 个英文单词
-6. 不要使用负面描述（如"no blur"），用正面描述（如"sharp focus"）
+6. 不要使用负面描述，用正面描述
 
-## SKILL 知识库
+## SKILL 规则库（按类型分类，AI 根据用户输入选择）
 
-### 一、提示词结构公式
-[主体] + [动作/姿态] + [风格/媒介] + [场景/环境] + [光照] + [镜头/技术]
-按此顺序组织提示词，最重要的元素放前面。
+### 【人像类】- 用户描述中有：人/美女/帅哥/女孩/男孩/男人/女人/portrait/person/woman/man
+→ 选择此规则：85mm f/1.4 lens, shallow depth of field, bokeh background, catchlight in eyes, natural skin texture, professional portrait lighting
+→ 有场景动作时不要强制特写
 
-### 二、光照规则（必须指定，对画质影响最大）
-- 自然光：golden hour（温暖柔和）、overcast（均匀散射）、harsh midday（高对比）
-- 棚拍光：softbox（均匀专业）、rim light（边缘分离）、butterfly（美感）、Rembrandt（戏剧性）
-- 氛围光：volumetric fog（深度神秘）、god rays（神圣）、neon glow（赛博朋克）、candlelight（温馨）
-- 情绪光：dramatic shadows（紧张）、high key（明亮）、low key（神秘）、chiaroscuro（强对比）
+### 【风景类】- 用户描述中有：风景/海边/山/湖/森林/日落/日出/天空/landscape/mountain/ocean/forest/sunset
+→ 选择此规则：golden hour lighting, dramatic sky, leading lines, rule of thirds composition, wide angle 16mm lens, deep depth of field, vivid colors
 
-### 三、镜头/构图规则
-- 人像：85mm f/1.4，浅景深，背景虚化，catchlight in eyes
-- 广角：24mm，广阔视角，引导线，前景兴趣
-- 微距：100mm macro，极端特写，奶油般虚化
-- 鸟瞰：俯拍，全景，广阔构图
-- 全景：超广角，电影宽高比，壮阔场景
-- 构图：三分法、引导线、对称、框架、负空间
+### 【产品类】- 用户描述中有：产品/商品/手机/耳机/化妆品/product/item/phone/headphone
+→ 选择此规则：clean white studio background, soft even lighting, commercial quality, sharp focus throughout, reflection on glossy surface, 8K resolution
 
-### 四、画质关键词（始终追加）
-- 8K resolution, sharp focus, detailed, professional quality
-- RAW photo, professional color science（照片级写实时）
-- concept art, rich color palette（艺术类时）
+### 【动漫类】- 用户描述中有：动漫/二次元/anime/manga/cartoon
+→ 选择此规则：anime style, cel shading, vibrant colors, detailed expressive eyes, clean linework, dynamic composition, studio quality
 
-### 五、人像专用规则
-- 自然皮肤纹理，不要过度磨皮
-- 表情自然，catchlight in eyes
-- 有场景动作时不要强制特写
+### 【奇幻类】- 用户描述中有：奇幻/魔法/精灵/龙/城堡/fantasy/magic/dragon/castle
+→ 选择此规则：ethereal magical lighting, mystical atmosphere, volumetric fog, god rays, dreamlike quality, concept art, epic scale
 
-### 六、时代/风格规则
-- 古风/唐朝/宋朝/明朝 → 传统中式服装+古典发型
-- 民国 → 旗袍，老上海美学
-- 未来 → 科幻，高科技环境
-- 赛博朋克 → 霓虹灯，雨湿街道，全息投影
-- 水墨画 → 墨色渐变，留白构图，东方美学
+### 【赛博朋克类】- 用户描述中有：赛博朋克/霓虹/未来/cyberpunk/neon/futuristic
+→ 选择此规则：neon glow lighting, volumetric haze, futuristic architecture, rain-slicked streets, high contrast, holographic displays
 
-### 七、负面描述替代
-- "不要模糊" → "sharp focus, crisp details"
-- "不要噪点" → "clean image, smooth gradients"
-- "不要水印" → "pristine image, clean composition"
+### 【水墨类】- 用户描述中有：水墨/中国画/国画/ink painting/chinese art
+→ 选择此规则：Chinese ink painting style, flowing brush strokes, minimalist composition, negative space, monochromatic ink, poetic atmosphere
 
-## 用户选择（静默生效）
+### 【电影感类】- 用户描述中有：电影/影院/cinematic/movie/film
+→ 选择此规则：cinematic lighting, dramatic atmosphere, film grain, shallow depth of field, anamorphic lens flare, professional color grading
+
+### 【动物类】- 用户描述中有：猫/狗/鸟/鱼/动物/cat/dog/bird/animal
+→ 选择此规则：detailed fur/feather texture, natural pose, soft natural lighting, shallow depth of field, sharp focus on eyes
+
+### 【建筑类】- 用户描述中有：建筑/城市/大楼/古镇/architecture/city/building
+→ 选择此规则：architectural photography, wide angle 24mm, leading lines, symmetry, dramatic lighting, deep depth of field
+
+### 【食物类】- 用户描述中有：美食/蛋糕/咖啡/食物/food/cake/coffee
+→ 选择此规则：food photography, warm natural lighting, shallow depth of field, appetizing colors, clean background, 8K detail
+
+### 【时代风格】- 检测到时代关键词时追加：
+- 古风/唐朝/宋朝/明朝 → traditional Chinese clothing, classical hairstyle, period costume
+- 民国 → qipao, old Shanghai aesthetic
+- 维多利亚 → Victorian era, ornate details, gaslight atmosphere
+
+### 【通用画质】- 始终追加：
+8K resolution, sharp focus, detailed, professional quality
+
+## 用户选择（静默生效，AI 必须遵循）
 
 ';
 
-    // 添加效果规则
-    $effect_rules = array(
-        'cinematic'      => '效果=电影感：需要戏剧性光影，电影色彩，浅景深，anamorphic lens flare',
-        'photorealistic' => '效果=照片级写实：需要自然光，专业摄影，RAW photo，8K，accurate skin tones',
-        'anime'          => '效果=动漫：需要cel shading，鲜艳色彩，清晰线条，studio quality',
-        'watercolor'     => '效果=水彩：需要柔和色彩，纸张纹理，笔触感',
-        'oil-painting'   => '效果=油画：需要厚涂技法，画布纹理，chiaroscuro',
-        'cyberpunk'      => '效果=赛博朋克：需要霓虹灯，雨湿街道，全息投影，高对比',
-        'fantasy'        => '效果=奇幻：需要魔法氛围，体积光，god rays，史诗感',
-        '3d-render'      => '效果=3D渲染：需要光线追踪，全局光照，PBR材质',
-        'pixel-art'      => '效果=像素艺术：需要8位风格，有限色彩，像素清晰',
-        'cartoon'        => '效果=卡通：需要鲜艳色彩，粗轮廓线，干净形状',
+    // 添加用户选择的效果规则
+    $effect_map = array(
+        'cinematic'      => '用户选择效果=电影感',
+        'photorealistic' => '用户选择效果=照片级写实',
+        'anime'          => '用户选择效果=动漫',
+        'watercolor'     => '用户选择效果=水彩',
+        'oil-painting'   => '用户选择效果=油画',
+        'cyberpunk'      => '用户选择效果=赛博朋克',
+        'fantasy'        => '用户选择效果=奇幻',
+        '3d-render'      => '用户选择效果=3D渲染',
+        'pixel-art'      => '用户选择效果=像素艺术',
+        'cartoon'        => '用户选择效果=卡通',
     );
-    if ( ! empty( $effect ) && isset( $effect_rules[ $effect ] ) ) {
-        $system_prompt .= $effect_rules[ $effect ] . '\n';
+    if ( ! empty( $effect ) && isset( $effect_map[ $effect ] ) ) {
+        $system_prompt .= $effect_map[ $effect ] . '\n';
     }
 
-    // 添加镜头规则
-    $lens_rules = array(
-        'portrait'   => '镜头=人像：85mm f/1.4，浅景深，背景虚化，catchlight',
-        'wide-angle' => '镜头=广角：24mm，广阔视角，引导线，纵深感',
-        'macro'      => '镜头=微距：100mm，极端特写，奶油虚化',
-        'birdseye'   => '镜头=鸟瞰：俯拍，全景，广阔构图',
-        'panoramic'  => '镜头=全景：超广角，电影宽高比，壮阔场景',
-        'close-up'   => '镜头=特写：亲密构图，细节聚焦，浅景深',
-        'low-angle'  => '镜头=仰视：戏剧性透视，高大主体',
-        'eye-level'  => '镜头=平视：自然视角，纪录片风格',
+    // 添加用户选择的镜头规则
+    $lens_map = array(
+        'portrait'   => '用户选择镜头=人像（85mm f/1.4，浅景深，背景虚化）',
+        'wide-angle' => '用户选择镜头=广角（24mm，广阔视角，纵深感）',
+        'macro'      => '用户选择镜头=微距（100mm，极端特写，奶油虚化）',
+        'birdseye'   => '用户选择镜头=鸟瞰（俯拍，全景）',
+        'panoramic'  => '用户选择镜头=全景（超广角，电影宽高比）',
+        'close-up'   => '用户选择镜头=特写（亲密构图，细节聚焦）',
+        'low-angle'  => '用户选择镜头=仰视（戏剧性透视）',
+        'eye-level'  => '用户选择镜头=平视（自然视角）',
     );
-    if ( ! empty( $lens ) && isset( $lens_rules[ $lens ] ) ) {
-        $system_prompt .= $lens_rules[ $lens ] . '\n';
+    if ( ! empty( $lens ) && isset( $lens_map[ $lens ] ) ) {
+        $system_prompt .= $lens_map[ $lens ] . '\n';
     }
 
-    // 添加模板规则
-    $template_rules = array(
-        'portrait'   => '模板=人像摄影：需要清晰人物主体，自然肤色表情',
-        'landscape'  => '模板=风景：需要壮阔自然场景，良好光线构图',
-        'product'    => '模板=产品：需要清晰商品主体，干净背景，商业品质',
-        'anime'      => '模板=动漫：需要日式美学，鲜艳色彩，清晰线条',
-        'poster'     => '模板=海报：需要强视觉冲击，清晰层次，印刷品质',
-        'fantasy'    => '模板=奇幻：需要魔法氛围，梦幻光影，史诗感',
-        'cyberpunk'  => '模板=赛博朋克：需要霓虹灯，未来感，高对比',
-        'chinese_ink'=> '模板=水墨：需要墨色渐变，留白构图，东方美学',
-        'cinematic'  => '模板=电影：需要戏剧光影，浅景深，电影色彩',
-        'infographic'=> '模板=信息图：需要数据可视化，清晰层级',
-        'scene'      => '模板=场景：需要氛围感，故事性，艺术指导',
-        'avatar'     => '模板=头像：需要居中构图，干净背景',
-        'ui-mockup'  => '模板=UI：需要界面展示，设备框架',
-        'map'        => '模板=地图：需要地标标注，插画风格',
-        'slide'      => '模板=幻灯片：需要数据可视化，企业设计',
-        'editing'    => '模板=编辑：需要自然修改效果',
-        'storyboard' => '模板=分镜：需要叙事性，多格布局',
-        'grid'       => '模板=网格：需要统一主题，协调配色',
-        'branding'   => '模板=品牌：需要品牌标识，材质质感',
-        'typography' => '模板=排版：需要文字为主体，字体层级',
-        'asset'      => '模板=素材：需要成套设计，统一风格',
-        'academic'   => '模板=学术：需要白色背景，几何精确',
-        'technical'  => '模板=技术图：需要暗色背景，等宽字体',
+    // 添加用户选择的模板规则
+    $template_map = array(
+        'portrait'   => '用户选择模板=人像摄影',
+        'landscape'  => '用户选择模板=风景',
+        'product'    => '用户选择模板=产品',
+        'anime'      => '用户选择模板=动漫',
+        'poster'     => '用户选择模板=海报',
+        'fantasy'    => '用户选择模板=奇幻',
+        'cyberpunk'  => '用户选择模板=赛博朋克',
+        'chinese_ink'=> '用户选择模板=水墨',
+        'cinematic'  => '用户选择模板=电影',
+        'infographic'=> '用户选择模板=信息图',
+        'scene'      => '用户选择模板=场景',
+        'avatar'     => '用户选择模板=头像',
+        'ui-mockup'  => '用户选择模板=UI',
+        'map'        => '用户选择模板=地图',
+        'slide'      => '用户选择模板=幻灯片',
     );
-    if ( ! empty( $template ) && isset( $template_rules[ $template ] ) ) {
-        $system_prompt .= $template_rules[ $template ] . '\n';
+    if ( ! empty( $template ) && isset( $template_map[ $template ] ) ) {
+        $system_prompt .= $template_map[ $template ] . '\n';
     }
 
-    $system_prompt .= '\n现在，请根据以上 SKILL 知识库规则，将用户输入转换为高质量的英文提示词。只输出最终提示词，不要解释。';
+    $system_prompt .= '\n请根据以上分析，选择最相关的 SKILL 规则，生成高质量英文提示词。只输出最终提示词，不要解释。';
 
     $messages = array(
         array( 'role' => 'system', 'content' => $system_prompt ),
