@@ -269,15 +269,26 @@
             });
 
             fetch(aiphotoAjax.url + '?' + aiParams.toString())
-                .then(function(r) { return r.json(); })
+                .then(function(r) {
+                    if (!r.ok) throw new Error('AI增强请求失败');
+                    return r.json();
+                })
                 .then(function(aiData) {
+                    if (!aiData.success) {
+                        addProgress('AI增强失败，使用原始提示词');
+                        return aiData;
+                    }
                     addProgress('AI 分析完成，开始生成图片...');
+                    return aiData;
 
                     // 第二步：用增强后的提示词调用图片生成
                     var formData = new FormData();
                     formData.append('action', 'aiphoto_generate');
                     formData.append('nonce', aiphotoAjax.nonce);
-                    formData.append('prompt', aiData.success ? aiData.data.enhanced : state.prompt);
+                    // 过滤 Midjourney 风格的参数（--ar, --chaos, --style 等）
+                    var finalPrompt = (aiData.success && aiData.data.enhanced) ? aiData.data.enhanced : state.prompt;
+                    finalPrompt = finalPrompt.replace(/\s*--\w+\s+\S+/g, '').trim();
+                    formData.append('prompt', finalPrompt);
                     formData.append('user_prompt', state.userPrompt || state.prompt || '转换图片');
                     formData.append('size', state.size || '');
                     formData.append('ratio', state.ratio || '');
@@ -303,6 +314,7 @@
                         return;
                     }
                     console.error('AIPhoto错误:', err);
+                    addProgress('错误: ' + (err.message || '生成失败'));
                     showError(aiphotoAjax.i18n.error);
                 })
                 .finally(function() { setLoading(false); });

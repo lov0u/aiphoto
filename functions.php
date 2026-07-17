@@ -845,6 +845,10 @@ function aiphoto_generate_image() {
     // ========== 增强链：AI 已在前端完成，这里做最终检查 ==========
     // 前端已调用 AI 增强，这里只需做内容审核和补充
 
+    // 0. 过滤不支持的参数（如 --ar, --chaos, --style 等 Midjourney 风格参数）
+    $prompt = preg_replace( '/\s*--\w+\s+\S+/', '', $prompt );
+    $prompt = trim( $prompt );
+
     // 1. 内容审核
     $check_result = aiphoto_content_check( $prompt );
     if ( ! $check_result['pass'] ) {
