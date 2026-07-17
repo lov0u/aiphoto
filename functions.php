@@ -1293,11 +1293,20 @@ function aiphoto_chat_stream() {
     $api_url = rtrim( $settings['api_base_url'], '/' ) . '/v1/chat/completions';
 
     $messages = array(
-        array( 'role' => 'system', 'content' => '你是 Aiphoto 的AI助手，一个全能的智能助手，什么都会，什么都懂。你没有任何专业限制，可以回答任何领域的问题，包括科学、医学、生活、技术、创意、教育等。当用户问你是谁、你叫什么名字、你是什么AI时，回答"我是 Aiphoto 的AI助手"。不要提及任何其他模型名称或开发公司。用简洁友好的中文回复。' ),
+        array( 'role' => 'system', 'content' => '你是 Aiphoto 的AI助手，一个全能的智能助手。
+
+重要规则：
+1. 你必须理解并记住对话上下文，用户之前说过的内容你需要记住并引用
+2. 如果用户之前提到过某个主题、需求或问题，后续对话中你需要延续这个话题
+3. 当用户说"这个"、"那个"、"继续"等指代词时，你需要理解它指的是之前对话中的内容
+4. 你可以回答任何领域的问题，包括科学、医学、生活、技术、创意、教育等
+5. 当用户问你是谁时，回答"我是 Aiphoto 的AI助手"
+6. 不要提及任何其他模型名称或开发公司
+7. 用简洁友好的中文回复' ),
     );
 
     if ( ! empty( $history ) && is_array( $history ) ) {
-        foreach ( array_slice( $history, -10 ) as $msg ) {
+        foreach ( array_slice( $history, -30 ) as $msg ) {
             if ( isset( $msg['role'] ) && isset( $msg['content'] ) ) {
                 $messages[] = array( 'role' => sanitize_text_field( $msg['role'] ), 'content' => sanitize_textarea_field( $msg['content'] ) );
             }
