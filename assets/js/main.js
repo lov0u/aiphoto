@@ -271,7 +271,7 @@
             fetch(aiphotoAjax.url + '?' + aiParams.toString())
                 .then(function(r) { return r.json(); })
                 .then(function(aiData) {
-                    setProgress('🎨 生成图片中...');
+                    addProgress('AI 分析完成，开始生成图片...');
 
                     // 第二步：用增强后的提示词调用图片生成
                     var formData = new FormData();
