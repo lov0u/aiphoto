@@ -1,7 +1,7 @@
 <?php
 /**
  * 模板名称: 图片生成
- * 描述: AI 图片生成页面
+ * 描述: AI 图片生成页面 - Agnes 风格
  */
 
 get_header();
@@ -9,143 +9,298 @@ get_header();
 $settings = aiphoto_get_settings();
 ?>
 
-<section class="gen-page" id="gen-page">
-    <div class="container">
-        <div class="gen-layout">
-            <!-- 左侧：生成器 -->
-            <div class="gen-panel gen-panel--editor">
-                <div class="gen-panel-header">
-                    <h1>生成图片</h1>
-                    <p class="gen-panel-desc">输入描述文字，AI 即刻为你生成高质量图片</p>
+<style>
+/* ===== Agnes 风格内联基础变量 ===== */
+:root {
+    --agnes-green-start: #a8e063;
+    --agnes-green-end: #56ab91;
+    --agnes-yellow: #f9d423;
+    --agnes-bg: #ffffff;
+    --agnes-card-bg: #ffffff;
+    --agnes-text-primary: #1a1a1a;
+    --agnes-text-secondary: #8c8c8c;
+    --agnes-text-placeholder: #bfbfbf;
+    --agnes-border: #eeeeee;
+    --agnes-shadow: 0 2px 20px rgba(0,0,0,0.06);
+    --agnes-shadow-hover: 0 4px 30px rgba(0,0,0,0.1);
+    --agnes-radius-lg: 20px;
+    --agnes-radius-md: 12px;
+    --agnes-radius-sm: 8px;
+    --agnes-transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+</style>
+
+<!-- 全局背景渐变 -->
+<div class="agnes-global-bg"></div>
+
+<!-- 主容器 -->
+<div class="agnes-app" id="agnesApp">
+
+    <!-- 左侧导航栏 -->
+    <aside class="agnes-sidebar" id="agnesSidebar">
+        <div class="sidebar-logo">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                <rect width="28" height="28" rx="8" fill="url(#logoGrad)"/>
+                <path d="M8 14C8 10.6863 10.6863 8 14 8C17.3137 8 20 10.6863 20 14" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                <path d="M14 20C10.6863 20 8 17.3137 8 14" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                <defs>
+                    <linearGradient id="logoGrad" x1="0" y1="0" x2="28" y2="28">
+                        <stop stop-color="#a8e063"/>
+                        <stop offset="1" stop-color="#56ab91"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="#" class="sidebar-nav-item active" data-nav="generate">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+                </svg>
+                <span>灵感</span>
+            </a>
+            <a href="#" class="sidebar-nav-item" data-nav="works">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                </svg>
+                <span>作品</span>
+            </a>
+            <a href="#" class="sidebar-nav-item" data-nav="assets">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                </svg>
+                <span>资产</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <a href="#" class="sidebar-nav-item" data-nav="history">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+                <span>历史</span>
+            </a>
+            <a href="#" class="sidebar-nav-item" data-nav="settings">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+                <span>设置</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="agnes-main">
+
+        <!-- 顶栏 -->
+        <header class="agnes-topbar">
+            <div class="topbar-left">
+                <!-- 新建作品按钮（输入后显示） -->
+                <button class="new-work-btn" id="newWorkBtn" style="display:none;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 5v14M5 12h14"/>
+                    </svg>
+                    新作品
+                </button>
+            </div>
+            <div class="topbar-right">
+                <div class="credits-badge">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/><path d="M12 6v12M8 10h8M8 14h8"/>
+                    </svg>
+                    <span>66</span>
                 </div>
-
-                <?php if ( empty( $settings['api_key'] ) ) : ?>
-                <div class="api-warning" role="alert">
-                    <?php
-                    printf(
-                        esc_html__( 'API 尚未配置。请%s开始使用。', 'aiphoto' ),
-                        '<a href="' . esc_url( admin_url( 'admin.php?page=aiphoto-settings' ) ) . '">' . esc_html__( '前往设置', 'aiphoto' ) . '</a>'
-                    );
-                    ?>
+                <button class="upgrade-btn">升级</button>
+                <div class="avatar-circle">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                    </svg>
                 </div>
-                <?php endif; ?>
+            </div>
+        </header>
 
-                <form class="gen-form" id="generatorForm" novalidate>
-                    <div class="gen-input-group">
-                        <label for="generatorPrompt" class="gen-label">提示词</label>
-                        <textarea id="generatorPrompt" class="gen-textarea" rows="3"
-                                  placeholder="描述你想生成的图片，例如：夕阳下的宁静湖面，群山倒映在水中，金色阳光洒满水面..."
-                                  required maxlength="500"></textarea>
-                    </div>
+        <!-- 欢迎页 / 生成页 容器 -->
+        <div class="agnes-content" id="agnesContent">
 
-                    <div class="gen-options">
-                        <div class="gen-option">
-                            <label for="generatorSize" class="gen-label">尺寸</label>
-                            <select id="generatorSize" class="gen-select">
-                                <option value="1K">1K (1024×1024)</option>
-                                <option value="2K">2K (2048×2048)</option>
-                                <option value="3K">3K (3072×3072)</option>
-                                <option value="4K">4K (4096×4096)</option>
-                                <option value="1024x768">1024 × 768 (4:3)</option>
-                                <option value="1024x1792">1024 × 1792 (9:16)</option>
-                                <option value="1792x1024">1792 × 1024 (16:9)</option>
-                            </select>
-                        </div>
-                        <div class="gen-option">
-                            <label for="generatorRatio" class="gen-label">比例</label>
-                            <select id="generatorRatio" class="gen-select">
-                                <option value="1:1">1:1 正方形</option>
-                                <option value="3:4">3:4 竖版</option>
-                                <option value="4:3">4:3 横版</option>
-                                <option value="16:9">16:9 宽屏</option>
-                                <option value="9:16">9:16 竖屏</option>
-                                <option value="2:3">2:3</option>
-                                <option value="3:2">3:2</option>
-                                <option value="21:9">21:9 超宽</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- 图生图 -->
-                    <div class="gen-img2img-toggle">
-                        <button type="button" class="gen-toggle-btn" id="img2imgToggle">
-                            🖼 图生图
-                        </button>
-                        <div class="gen-img2img-area" id="img2imgArea" style="display:none;">
-                            <p class="gen-help-text">上传参考图片（可选，最多 4 张）：</p>
-                            <div id="img2imgPreview"></div>
-                            <input type="file" id="img2imgInput" accept="image/*" multiple style="display:none;">
-                            <button type="button" class="gen-select-file-btn" id="img2imgUploadBtn">选择图片</button>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="gen-submit-btn" id="generateBtn" disabled>
-                        <span id="btnText">生成图片</span>
-                        <span id="btnSpinner" class="spinner" style="display:none;"></span>
-                    </button>
-                </form>
-
-                <!-- 结果 -->
-                <div class="gen-result" id="generatorResult">
-                    <div class="gen-result-header">
-                        <h3>生成结果</h3>
-                    </div>
-                    <div class="gen-result-image">
-                        <img id="resultImage" src="" alt="">
-                    </div>
-                    <div class="gen-result-actions">
-                        <button class="gen-action-btn" id="downloadBtn">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                            下载原图
-                        </button>
-                        <button class="gen-action-btn" id="copyPromptBtn">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-                            复制提示词
-                        </button>
-                    </div>
-                    <div class="status-message error" id="errorMessage" style="display:none;" role="alert"></div>
+            <!-- 欢迎态（未输入时显示） -->
+            <div class="agnes-welcome" id="agnesWelcome">
+                <div class="welcome-text">
+                    <h1 class="welcome-title">释放您的创造力，</h1>
+                    <h2 class="welcome-subtitle">立即将想法变为现实！</h2>
+                </div>
+                <div class="welcome-visual">
+                    <div class="visual-ring"></div>
+                    <div class="visual-ring visual-ring--2"></div>
+                    <div class="visual-ring visual-ring--3"></div>
                 </div>
             </div>
 
-            <!-- 右侧：最近生成 -->
-            <div class="gen-panel gen-panel--recent">
-                <div class="gen-panel-header">
-                    <h2>最近生成</h2>
-                    <a href="<?php echo esc_url( get_permalink( get_page_by_path( 'gallery' ) ) ?: home_url( '/gallery/' ) ); ?>" class="gen-view-all">查看全部</a>
-                </div>
-                <div class="gen-recent-grid" id="recentGrid">
-                    <?php
-                    $recent = new WP_Query( array(
-                        'post_type'      => 'attachment',
-                        'post_status'    => 'inherit',
-                        'post_mime_type' => 'image',
-                        'posts_per_page' => 6,
-                        'orderby'        => 'date',
-                        'order'          => 'DESC',
-                        'fields'         => 'ids',
-                    ) );
-                    if ( $recent->have_posts() ) :
-                        foreach ( $recent->posts as $attach_id ) :
-                            $thumb = wp_get_attachment_image_src( $attach_id, 'medium' );
-                            $full  = wp_get_attachment_image_src( $attach_id, 'full' );
-                            $title = get_the_title( $attach_id );
-                            ?>
-                            <?php $user_prompt = get_post_meta( $attach_id, '_aiphoto_user_prompt', true ) ?: get_post_meta( $attach_id, '_aiphoto_prompt', true ); ?>
-                            <div class="gen-recent-item" data-full="<?php echo esc_url( $full[0] ); ?>" data-title="<?php echo esc_attr( $title ); ?>" data-original-prompt="<?php echo esc_attr( $user_prompt ); ?>">
-                                <?php if ( $thumb ) : ?>
-                                    <img src="<?php echo esc_url( $thumb[0] ); ?>" alt="<?php echo esc_attr( $title ); ?>" loading="lazy">
-                                <?php endif; ?>
-                            </div>
-                        <?php endforeach;
-                    else : ?>
-                        <div class="gen-empty-recent">
-                            <p>还没有生成图片</p>
+            <!-- 生成器卡片（输入区域） -->
+            <div class="agnes-generator-card" id="agnesCard">
+                <div class="card-inner">
+
+                    <!-- 上传参考素材按钮 -->
+                    <div class="card-upload-area" id="cardUploadArea">
+                        <button type="button" class="upload-plus-btn" id="uploadPlusBtn">+</button>
+                        <input type="file" id="fileInput" accept="image/*" multiple style="display:none;">
+                        <div class="upload-previews" id="uploadPreviews"></div>
+                    </div>
+
+                    <!-- 文本输入 -->
+                    <textarea
+                        class="card-textarea"
+                        id="agnesPrompt"
+                        rows="1"
+                        placeholder="上传参考素材、输入文字，请描述你想生成的图片"
+                    ></textarea>
+
+                    <!-- 底部工具栏 -->
+                    <div class="card-toolbar">
+                        <!-- 模式选择 -->
+                        <div class="toolbar-group">
+                            <button type="button" class="toolbar-btn toolbar-btn--dropdown" id="modeDropdownBtn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+                                </svg>
+                                图片生成
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"/>
+                                </svg>
+                            </button>
                         </div>
-                    <?php endif; ?>
+
+                        <!-- 模型选择 -->
+                        <div class="toolbar-group">
+                            <button type="button" class="toolbar-btn toolbar-btn--model" id="modelDropdownBtn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+                                </svg>
+                                Agnes Image 2.1 Flash
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- 设置 -->
+                        <div class="toolbar-group">
+                            <button type="button" class="toolbar-btn toolbar-btn--settings" id="settingsBtn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>
+                                </svg>
+                                设置
+                            </button>
+                        </div>
+
+                        <!-- @符号 -->
+                        <div class="toolbar-group">
+                            <button type="button" class="toolbar-btn toolbar-btn--at">@</button>
+                        </div>
+
+                        <!-- 右侧：积分 + 发送 -->
+                        <div class="toolbar-right">
+                            <div class="credits-small">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a8e063" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/><path d="M12 6v12M8 10h8M8 14h8"/>
+                                </svg>
+                                <span>0</span>
+                            </div>
+                            <button type="button" class="send-btn" id="sendBtn" disabled>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
                 </div>
+            </div>
+
+            <!-- 底部发现/短剧 Tabs（保留占位） -->
+            <div class="agnes-discover-tabs" id="discoverTabs">
+                <div class="discover-tabs-inner">
+                    <button class="discover-tab" data-tab="discover">发现</button>
+                    <button class="discover-tab active" data-tab="short">短剧</button>
+                </div>
+                <a href="#" class="discover-upload">上传短剧</a>
+            </div>
+
+            <!-- 底部推荐卡片（保留占位） -->
+            <div class="agnes-recommended" id="recommendedSection">
+                <div class="rec-scroll" id="recScroll">
+                    <!-- JS 动态填充 -->
+                </div>
+            </div>
+
+        </div><!-- /agnes-content -->
+
+    </main>
+</div><!-- /agnes-app -->
+
+<!-- ===== 设置弹窗 ===== -->
+<div class="agnes-settings-overlay" id="settingsOverlay" style="display:none;">
+    <div class="agnes-settings-panel">
+        <h3 class="settings-title">设置</h3>
+
+        <!-- 比例选择 -->
+        <div class="settings-section">
+            <label class="settings-label">比例</label>
+            <div class="ratio-grid" id="ratioGrid">
+                <button type="button" class="ratio-btn active" data-ratio="auto">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+                    </svg>
+                    Auto
+                </button>
+                <button type="button" class="ratio-btn" data-ratio="1:1">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+                    1:1
+                </button>
+                <button type="button" class="ratio-btn" data-ratio="3:4">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="3" width="14" height="18" rx="2"/></svg>
+                    3:4
+                </button>
+                <button type="button" class="ratio-btn" data-ratio="4:3">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/></svg>
+                    4:3
+                </button>
+                <button type="button" class="ratio-btn" data-ratio="16:9">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/></svg>
+                    16:9
+                </button>
+                <button type="button" class="ratio-btn" data-ratio="9:16">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="2"/></svg>
+                    9:16
+                </button>
+                <button type="button" class="ratio-btn" data-ratio="2:3">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="20" rx="2"/></svg>
+                    2:3
+                </button>
+                <button type="button" class="ratio-btn" data-ratio="3:2">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/></svg>
+                    3:2
+                </button>
+                <button type="button" class="ratio-btn" data-ratio="21:9">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="7" width="22" height="10" rx="2"/></svg>
+                    21:9
+                </button>
             </div>
         </div>
+
+        <!-- 分辨率选择 -->
+        <div class="settings-section">
+            <label class="settings-label">分辨率</label>
+            <div class="resolution-group" id="resolutionGroup">
+                <button type="button" class="res-btn active" data-res="1K">1K</button>
+                <button type="button" class="res-btn" data-res="2K">2K</button>
+                <button type="button" class="res-btn" data-res="4K">4K</button>
+            </div>
+        </div>
+
+        <!-- 关闭按钮 -->
+        <button type="button" class="settings-close" id="settingsClose">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
     </div>
-</section>
+</div>
 
 <?php get_footer(); ?>

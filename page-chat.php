@@ -793,14 +793,10 @@ html, body.chat-page {
 }
 
 /* 滚动按钮（输入框正上方偏左） */
-.chat-scroll-btn {
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    margin-bottom: 8px;
-    width: 32px;
-    height: 32px;
+/* 内联滚动按钮（快捷标签中间） */
+.chat-scroll-btn-inline {
+    width: 28px;
+    height: 28px;
     background: #fff;
     border: 1px solid #d1d5db;
     border-radius: 50%;
@@ -808,12 +804,40 @@ html, body.chat-page {
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-    z-index: 10;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
     opacity: 0;
     transition: all 200ms ease;
     pointer-events: none;
+    flex-shrink: 0;
 }
+
+.chat-scroll-btn-inline.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.chat-scroll-btn-inline:hover {
+    border-color: #a78bfa;
+    box-shadow: 0 2px 8px rgba(167,139,250,0.2);
+}
+
+.chat-scroll-btn-inline svg {
+    width: 14px;
+    height: 14px;
+    color: #374151;
+    stroke-width: 2.5;
+}
+
+/* 默认箭头朝下 */
+.chat-scroll-btn-inline svg.arrow-up { display: none; }
+.chat-scroll-btn-inline svg.arrow-down { display: block; }
+
+/* 在底部时箭头朝上 */
+.chat-scroll-btn-inline.at-bottom svg.arrow-up { display: block; }
+.chat-scroll-btn-inline.at-bottom svg.arrow-down { display: none; }
+
+/* 旧的滚动按钮隐藏 */
+.chat-scroll-btn { display: none !important; }
 
 .chat-scroll-btn.show {
     opacity: 1;
@@ -997,24 +1021,24 @@ html, body.chat-page {
         <div class="chat-welcome-tags" id="chatWelcomeTags">
             <button class="chat-tag" data-prompt="帮我制作一个 AI 幻灯片">AI 幻灯片</button>
             <button class="chat-tag" data-prompt="帮我创建一个网站">创建网站</button>
+            <!-- 滚动按钮放在快捷标签中间 -->
+            <button class="chat-scroll-btn-inline" id="scrollBtn">
+                <svg class="arrow-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="12" y1="19" x2="12" y2="5"/>
+                    <polyline points="5 12 12 5 19 12"/>
+                </svg>
+                <svg class="arrow-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <polyline points="19 12 12 19 5 12"/>
+                </svg>
+            </button>
             <button class="chat-tag" data-prompt="帮我做 AI 设计">AI 设计</button>
             <button class="chat-tag" data-prompt="帮我做 AI 表格">AI 表格</button>
             <button class="chat-tag chat-tag-more">更多</button>
         </div>
 
         <!-- 输入区域（居中） -->
-        <div class="chat-input-area" style="position:relative;">
-            <!-- 滚动按钮（输入框正上方居中） -->
-            <button class="chat-scroll-btn" id="scrollBtn">
-                <svg class="arrow-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="12" y1="19" x2="12" y2="5"/>
-                    <polyline points="5 12 12 5 19 12"/>
-                </svg>
-                <svg class="arrow-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="12" y1="5" x2="12" y2="19"/>
-                    <polyline points="19 12 12 19 5 12"/>
-                </svg>
-            </button>
+        <div class="chat-input-area">
             <div class="chat-input-container">
                 <div class="chat-input-row">
                     <textarea class="chat-input" id="chatInput" placeholder="分配一个任务或提问任何问题" rows="1"></textarea>
@@ -1181,7 +1205,7 @@ html, body.chat-page {
             });
         });
 
-        // 滚动按钮 + 顶部遮罩
+        // 内联滚动按钮 + 顶部遮罩
         var scrollBtn = document.getElementById('scrollBtn');
         var scrollFade = document.getElementById('scrollFade');
         if (scrollBtn || scrollFade) {

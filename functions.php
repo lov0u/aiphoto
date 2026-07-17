@@ -115,7 +115,7 @@ register_activation_hook( __FILE__, 'aiphoto_flush_rules' );
 
 function aiphoto_get_settings() {
     $defaults = array(
-        'api_key'         => 'wk-mGhyMZKCVgzlgixVmvWdxrK7JJUmUymI6oAgFt7Qug0m',
+        'api_key',
         'api_base_url'    => 'https://apihub.agnes-ai.com',
         'api_model'       => 'agnes-image-2.1-flash',
         'api_image_size'  => '1K',
