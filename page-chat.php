@@ -658,8 +658,6 @@ html, body.chat-page {
     display: flex;
     flex-direction: column;
     align-items: center;
-    background: #fff;
-    border-top: 1px solid #f3f4f6;
     z-index: 5;
 }
 
