@@ -372,6 +372,101 @@ function aiphoto_content_check( $prompt ) {
 }
 
 // ============================================================
+// AI 提示词增强（用 agnes-2.0-flash 分析用户输入）
+// ============================================================
+
+/**
+ * 用 AI 模型将用户简短描述转换为高质量英文提示词
+ */
+function aiphoto_ai_enhance_prompt( $user_prompt, $effect = '', $lens = '' ) {
+    $settings = aiphoto_get_settings();
+    if ( empty( $settings['api_key'] ) ) return $user_prompt;
+
+    $api_url = rtrim( $settings['api_base_url'], '/' ) . '/v1/chat/completions';
+
+    // 构建系统提示词，告诉 AI 如何生成高质量图片提示词
+    $system_prompt = '你是一个专业的 AI 图片提示词工程师。你的任务是将用户的简短中文描述转换为高质量的英文图片生成提示词。
+
+规则：
+1. 输出必须是纯英文，不要包含中文
+2. 保持用户描述的核心意图（主体、场景、动作）
+3. 自动补充以下要素（如果用户没有指定）：
+   - 光照描述（如 golden hour lighting, soft diffused light）
+   - 画面构图（如 rule of thirds, leading lines）
+   - 画质关键词（如 8K resolution, sharp focus, detailed）
+4. 不要编造用户没有描述的内容（如用户说"猫"就不要加"in a garden"）
+5. 提示词长度控制在 30-80 个英文单词
+6. 不要使用负面描述（如"no blur"），用正面描述（如"sharp focus"）
+
+示例：
+输入："美女摘桃"
+输出："A beautiful young woman picking ripe peaches from a tree, golden hour sunlight, natural soft lighting, shallow depth of field, sharp focus, 8K resolution, photorealistic"
+
+输入："一只猫"
+输出："A cute cat sitting calmly, soft natural lighting, shallow depth of field, detailed fur texture, sharp focus, 8K resolution, photorealistic"
+
+输入："赛博朋克城市"
+输出："Futuristic cyberpunk cityscape at night, neon lights reflecting on rain-slicked streets, volumetric haze, dramatic lighting, high contrast, 8K resolution, cinematic"';
+
+    // 根据效果和镜头补充指令
+    $extra = '';
+    if ( $effect === 'anime' ) $extra = '\n风格要求：动漫风格，色彩鲜艳，线条清晰。';
+    if ( $effect === 'cinematic' ) $extra = '\n风格要求：电影感，戏剧性光影，浅景深。';
+    if ( $effect === 'watercolor' ) $extra = '\n风格要求：水彩画风格，柔和色彩，纸张纹理。';
+    if ( $effect === 'oil-painting' ) $extra = '\n风格要求：油画风格，厚涂技法，画布纹理。';
+    if ( $effect === 'cyberpunk' ) $extra = '\n风格要求：赛博朋克，霓虹灯，未来感。';
+    if ( $effect === 'fantasy' ) $extra = '\n风格要求：奇幻风格，魔法氛围，体积光。';
+    if ( $effect === '3d-render' ) $extra = '\n风格要求：3D渲染，光线追踪，全局光照。';
+    if ( $effect === 'pixel-art' ) $extra = '\n风格要求：像素艺术，复古8位游戏风格。';
+    if ( $effect === 'cartoon' ) $extra = '\n风格要求：卡通风格，鲜艳色彩，粗轮廓线。';
+    if ( $effect === 'photorealistic' ) $extra = '\n风格要求：照片级写实，专业摄影。';
+    if ( $lens === 'portrait' ) $extra .= '\n镜头：人像特写，浅景深，背景虚化。';
+    if ( $lens === 'wide-angle' ) $extra .= '\n镜头：广角，广阔视角，纵深感。';
+    if ( $lens === 'macro' ) $extra .= '\n镜头：微距，极端特写，浅景深。';
+    if ( $lens === 'birdseye' ) $extra .= '\n镜头：鸟瞰视角，俯拍。';
+    if ( $lens === 'panoramic' ) $extra .= '\n镜头：全景，宽幅画面。';
+
+    $system_prompt .= $extra;
+
+    $messages = array(
+        array( 'role' => 'system', 'content' => $system_prompt ),
+        array( 'role' => 'user', 'content' => $user_prompt ),
+    );
+
+    $body = array(
+        'model'       => 'agnes-2.0-flash',
+        'messages'    => $messages,
+        'max_tokens'  => 200,
+        'temperature' => 0.7,
+        'stream'      => false,
+    );
+
+    $response = wp_remote_post( $api_url, array(
+        'headers' => array(
+            'Authorization' => 'Bearer ' . $settings['api_key'],
+            'Content-Type'  => 'application/json',
+        ),
+        'body'    => wp_json_encode( $body ),
+        'timeout' => 30,
+    ) );
+
+    if ( is_wp_error( $response ) ) {
+        error_log( 'AIPhoto: [AI_ENHANCE] API error: ' . $response->get_error_message() );
+        return $user_prompt;
+    }
+
+    $data = json_decode( wp_remote_retrieve_body( $response ), true );
+    if ( isset( $data['choices'][0]['message']['content'] ) ) {
+        $enhanced = trim( $data['choices'][0]['message']['content'] );
+        error_log( 'AIPhoto: [AI_ENHANCE] Original: ' . $user_prompt );
+        error_log( 'AIPhoto: [AI_ENHANCE] Enhanced: ' . $enhanced );
+        return $enhanced;
+    }
+
+    return $user_prompt;
+}
+
+// ============================================================
 // 预设提示词模板（来自 GPT Image 2 Skill 的 17 大类）
 // ============================================================
 function aiphoto_get_predefined_templates() {
@@ -639,8 +734,13 @@ function aiphoto_generate_image() {
         'panoramic'  => 'panoramic view, wide sweeping landscape, ultra wide angle, cinematic aspect ratio, stitched panorama, vast horizon, epic scale',
     );
 
-    // ========== 增强链：11步提示词优化 ==========
-    // 1. 中文翻译
+    // ========== 增强链：12步提示词优化 ==========
+    // 0. AI 提示词增强（用 agnes-2.0-flash 分析用户输入，生成高质量英文提示词）
+    $ai_enhanced = aiphoto_ai_enhance_prompt( $prompt, $effect, $lens );
+    if ( ! empty( $ai_enhanced ) && $ai_enhanced !== $prompt ) {
+        $prompt = $ai_enhanced;
+    }
+    // 1. 中文翻译（AI 可能没有完全翻译的部分）
     $prompt = aiphoto_translate_prompt( $prompt );
     // 2. 负面提示词替代
     $prompt = aiphoto_positive_alternatives( $prompt );
