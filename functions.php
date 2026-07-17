@@ -3,7 +3,7 @@
  * AIPhoto 主题函数
  */
 
-如果 ( ! 定义了( 'ABSPATH' ) ) {
+if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
