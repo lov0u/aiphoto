@@ -8,35 +8,7 @@ get_header();
 
 $settings = aiphoto_get_settings();
 
-// 最近生成数据（PHP 注入给 JS）
-$recent_imgs = new WP_Query( array(
-    'post_type'      => 'attachment',
-    'post_status'    => 'inherit',
-    'post_mime_type' => 'image',
-    'posts_per_page' => 6,
-    'orderby'        => 'date',
-    'order'          => 'DESC',
-    'fields'         => 'ids',
-) );
-$recent_data = array();
-if ( $recent_imgs->have_posts() ) :
-    foreach ( $recent_imgs->posts as $aid ) :
-        $tu = wp_get_attachment_image_src( $aid, 'medium' );
-        $fu = wp_get_attachment_image_src( $aid, 'full' );
-        $tt = get_the_title( $aid );
-        $up = get_post_meta( $aid, '_aiphoto_user_prompt', true ) ?: get_post_meta( $aid, '_aiphoto_prompt', true );
-        $recent_data[] = array(
-            'thumb' => $tu[0] ?? '',
-            'full'  => $fu[0] ?? '',
-            'title' => $tt ?: 'AI 图片',
-            'prompt'=> $up,
-        );
-    endforeach;
-endif;
-wp_reset_postdata();
-?>
-
-<?php if ( empty( $settings['api_key'] ) ) : ?>
+if ( empty( $settings['api_key'] ) ) : ?>
 <div class="api-warning" role="alert">
     <?php
     printf(
@@ -47,14 +19,11 @@ wp_reset_postdata();
 </div>
 <?php endif; ?>
 
-<!-- 全局背景 -->
-<div class="agnes-global-bg"></div>
-
 <!-- 主容器 -->
 <div class="agnes-app" id="agnesApp">
 
-    <!-- 左侧作品列表（输入后显示） -->
-    <aside class="agnes-recent-sidebar" id="agnesRecentSidebar" style="display:none;">
+    <!-- 左侧作品列表（localStorage 驱动） -->
+    <aside class="agnes-recent-sidebar" id="agnesRecentSidebar">
         <div class="recent-sidebar-header">
             <button class="new-work-btn" id="newWorkBtn">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -67,21 +36,7 @@ wp_reset_postdata();
             </button>
         </div>
         <div class="recent-list" id="recentList">
-            <?php if ( ! empty( $recent_data ) ) : ?>
-                <?php foreach ( $recent_data as $r ) : ?>
-                <div class="recent-item" data-full="<?php echo esc_url( $r['full'] ); ?>" data-prompt="<?php echo esc_attr( $r['prompt'] ); ?>">
-                    <div class="recent-thumb">
-                        <?php if ( ! empty( $r['thumb'] ) ) : ?>
-                            <img src="<?php echo esc_url( $r['thumb'] ); ?>" alt="<?php echo esc_attr( $r['title'] ); ?>" loading="lazy">
-                        <?php endif; ?>
-                    </div>
-                    <div class="recent-info">
-                        <div class="recent-title"><?php echo esc_html( $r['title'] ); ?></div>
-                        <div class="recent-prompt"><?php echo esc_html( mb_substr( $r['prompt'], 0, 30 ) ); ?></div>
-                    </div>
-                </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
+            <div style="padding:20px 8px;text-align:center;color:#bbb;font-size:12px;">暂无记录</div>
         </div>
     </aside>
 
@@ -89,17 +44,10 @@ wp_reset_postdata();
     <main class="agnes-main">
         <div class="agnes-content" id="agnesContent">
 
-            <!-- 欢迎态（未输入时显示） -->
+            <!-- 欢迎态 -->
             <div class="agnes-welcome" id="agnesWelcome">
-                <div class="welcome-text">
-                    <h1 class="welcome-title">释放您的创造力，</h1>
-                    <h2 class="welcome-subtitle">立即将想法变为现实！</h2>
-                </div>
-                <div class="welcome-visual">
-                    <div class="visual-ring"></div>
-                    <div class="visual-ring visual-ring--2"></div>
-                    <div class="visual-ring visual-ring--3"></div>
-                </div>
+                <h1 class="welcome-title">释放您的创造力，</h1>
+                <h2 class="welcome-subtitle">立即将想法变为现实！</h2>
             </div>
 
             <!-- 生成器卡片 -->
@@ -183,7 +131,7 @@ wp_reset_postdata();
             </div>
 
             <!-- 底部发现 Tabs -->
-            <div class="agnes-discover-tabs" id="discoverTabs" style="display:none;">
+            <div class="agnes-discover-tabs" id="discoverTabs">
                 <div class="discover-tabs-inner">
                     <button class="discover-tab" data-tab="discover">发现</button>
                     <button class="discover-tab active" data-tab="short">短剧</button>
@@ -192,7 +140,7 @@ wp_reset_postdata();
             </div>
 
             <!-- 底部推荐卡片 -->
-            <div class="agnes-recommended" id="recommendedSection" style="display:none;">
+            <div class="agnes-recommended" id="recommendedSection">
                 <div class="rec-scroll" id="recScroll">
                     <!-- JS 动态填充 -->
                 </div>

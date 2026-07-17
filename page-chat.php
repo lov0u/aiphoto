@@ -406,7 +406,7 @@ html, body.chat-page {
 .chat-messages {
     flex: 1;
     overflow-y: auto;
-    padding: 24px 40px 140px;
+    padding: 24px 40px 160px;
     scroll-behavior: smooth;
     overscroll-behavior: contain;
 }
