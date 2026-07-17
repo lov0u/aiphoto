@@ -407,8 +407,10 @@ function aiphoto_ai_enhance_prompt( $user_prompt, $effect = '', $lens = '', $tem
 ## SKILL 规则库（按类型分类，AI 根据用户输入选择）
 
 ### 【人像类】- 用户描述中有：人/美女/帅哥/女孩/男孩/男人/女人/portrait/person/woman/man
-→ 选择此规则：85mm f/1.4 lens, shallow depth of field, bokeh background, catchlight in eyes, natural skin texture, professional portrait lighting
+→ 选择此规则：85mm f/1.4 lens, shallow depth of field, bokeh background, catchlight in eyes
+→ 皮肤规则（必须包含，非常重要）：airbrushed skin, flawless porcelain complexion, smooth even skin tone, magazine cover quality, studio beauty lighting, professional retouching, luminous glow, no blemishes, no imperfections, clean fresh face
 → 有场景动作时不要强制特写
+→ 绝对不要出现：dirty, rough, textured skin, pores, wrinkles, blemishes
 
 ### 【风景类】- 用户描述中有：风景/海边/山/湖/森林/日落/日出/天空/landscape/mountain/ocean/forest/sunset
 → 选择此规则：golden hour lighting, dramatic sky, leading lines, rule of thirds composition, wide angle 16mm lens, deep depth of field, vivid colors
@@ -447,6 +449,7 @@ function aiphoto_ai_enhance_prompt( $user_prompt, $effect = '', $lens = '', $tem
 
 ### 【通用画质】- 始终追加：
 8K resolution, sharp focus, detailed, professional quality
+→ 人像类额外追加：clean smooth flawless skin, soft even skin tone, luminous complexion
 
 ## 用户选择（静默生效，AI 必须遵循）
 
@@ -484,23 +487,14 @@ function aiphoto_ai_enhance_prompt( $user_prompt, $effect = '', $lens = '', $tem
         $system_prompt .= $lens_map[ $lens ] . '\n';
     }
 
-    // 添加用户选择的模板规则
+    // 添加快捷选项规则
     $template_map = array(
-        'portrait'   => '用户选择模板=人像摄影',
-        'landscape'  => '用户选择模板=风景',
-        'product'    => '用户选择模板=产品',
-        'anime'      => '用户选择模板=动漫',
-        'poster'     => '用户选择模板=海报',
-        'fantasy'    => '用户选择模板=奇幻',
-        'cyberpunk'  => '用户选择模板=赛博朋克',
-        'chinese_ink'=> '用户选择模板=水墨',
-        'cinematic'  => '用户选择模板=电影',
-        'infographic'=> '用户选择模板=信息图',
-        'scene'      => '用户选择模板=场景',
-        'avatar'     => '用户选择模板=头像',
-        'ui-mockup'  => '用户选择模板=UI',
-        'map'        => '用户选择模板=地图',
-        'slide'      => '用户选择模板=幻灯片',
+        'beauty'    => '快捷=美颜：皮肤必须 airbrushed flawless porcelain, smooth even complexion, magazine cover quality, studio beauty lighting, professional retouching, luminous glow, no blemishes, clean fresh face',
+        'soft_light' => '快捷=柔光：soft diffused lighting, gentle shadows, warm glow, dreamy atmosphere, flattering light on face',
+        'hd'        => '快捷=高清：8K resolution, ultra sharp focus, hyper detailed, professional quality, crystal clear',
+        'film'      => '快捷=胶片感：film grain, vintage color grading, Kodak Portra 400, analog warmth, soft contrast',
+        'magazine'  => '快捷=杂志风：magazine cover quality, editorial photography, professional studio lighting, high fashion, polished look',
+        'dreamy'    => '快捷=梦幻：ethereal glow, soft focus, dreamy atmosphere, pastel colors, magical lighting, fairy tale quality',
     );
     if ( ! empty( $template ) && isset( $template_map[ $template ] ) ) {
         $system_prompt .= $template_map[ $template ] . '\n';

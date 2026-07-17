@@ -8,8 +8,15 @@ get_header();
 
 $settings = aiphoto_get_settings();
 ?>
+<script>document.body.classList.add('chat-page');</script>
 
 <style>
+/* 固定页面不滚动，但保留页脚给爬虫 */
+html, body.chat-page {
+    overflow: hidden;
+    height: 100%;
+}
+
 /* 初始隐藏，避免闪烁 */
 .chat-layout {
     visibility: hidden;
@@ -21,51 +28,248 @@ $settings = aiphoto_get_settings();
 
 .chat-layout {
     display: flex;
-    height: calc(100vh - 100px);
-    margin-top: 90px;
+    height: calc(100vh - 80px);
+    margin-top: 80px;
     background: #fff;
     position: relative;
+    padding: 0;
 }
 
-/* 左侧边栏 */
+/* 左侧边栏（Agnes AI 风格） */
 .chat-sidebar {
     width: 260px;
-    background: #f8fafc;
-    border-right: 1px solid #e2e8f0;
+    background: transparent;
+    border-right: none;
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
     position: relative;
     z-index: 10;
-    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.04);
 }
 
-.chat-sidebar-header {
-    padding: 16px;
-    border-bottom: 1px solid #e2e8f0;
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.sidebar-collapse-btn {
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+    transition: all 150ms ease;
+    flex-shrink: 0;
+}
+
+.sidebar-collapse-btn:hover {
+    background: #e5e7eb;
+    color: #111827;
+}
+
+.sidebar-nav {
+    padding: 8px 12px;
+}
+
+.sidebar-nav-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    color: #374151;
+    cursor: pointer;
+    transition: all 150ms ease;
+    position: relative;
+}
+
+.sidebar-nav-item:hover {
+    background: #e5e7eb;
+}
+
+.sidebar-nav-item--active {
+    background: #eef2ff;
+    color: #4f46e5;
+    font-weight: 500;
+}
+
+/* 折叠状态下的悬停提示 */
+.chat-sidebar.collapsed .sidebar-nav-item {
+    position: relative;
+}
+
+.chat-sidebar.collapsed .sidebar-nav-item:hover::after {
+    content: attr(title);
+    position: absolute;
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #1f2937;
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.8125rem;
+    white-space: nowrap;
+    z-index: 9999;
+    margin-left: 8px;
+    pointer-events: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.chat-sidebar.collapsed .sidebar-footer-btn {
+    position: relative;
+}
+
+.chat-sidebar.collapsed .sidebar-footer-btn:hover::after {
+    content: attr(title);
+    position: absolute;
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #1f2937;
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.8125rem;
+    white-space: nowrap;
+    z-index: 9999;
+    margin-left: 8px;
+    pointer-events: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.sidebar-history {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #9ca3af;
+}
+
+.sidebar-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 12px 8px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.sidebar-footer-btn {
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+    transition: all 150ms ease;
+}
+
+.sidebar-footer-btn:hover {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+/* 侧边栏折叠状态（仿 Agnes AI） */
+.chat-sidebar.collapsed {
+    width: 72px;
+    overflow: hidden;
+}
+
+.chat-sidebar.collapsed .sidebar-header {
+    justify-content: center;
+    padding: 12px 0;
+}
+
+.chat-sidebar.collapsed .sidebar-collapse-btn svg {
+    transform: rotate(180deg);
+}
+
+.chat-sidebar.collapsed .sidebar-nav-item span,
+.chat-sidebar.collapsed .sidebar-logo-text {
+    display: none !important;
+}
+
+.chat-sidebar.collapsed .sidebar-nav-item {
+    justify-content: center;
+    padding: 10px 0;
+    width: 100%;
+}
+
+.chat-sidebar.collapsed .sidebar-nav-item svg {
+    width: 22px;
+    height: 22px;
+}
+
+.chat-sidebar.collapsed .sidebar-history {
+    display: none !important;
+}
+
+.chat-sidebar.collapsed .sidebar-footer {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    padding: 12px 4px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.chat-sidebar.collapsed .sidebar-footer-btn {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    margin: 0;
+}
+
+.chat-sidebar.collapsed .sidebar-footer-btn svg {
+    width: 18px;
+    height: 18px;
 }
 
 .chat-new-btn {
     width: 100%;
     padding: 10px 16px;
-    background: #fff;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
     font-size: 0.875rem;
     font-weight: 500;
-    color: #0f172a;
+    color: #111827;
     cursor: pointer;
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 6px;
+    gap: 8px;
     transition: all 150ms ease;
 }
 
 .chat-new-btn:hover {
-    border-color: #7c3aed;
-    color: #7c3aed;
-    background: #f5f3ff;
+    background: #eef2ff;
+    border-color: #818cf8;
+    color: #4f46e5;
 }
 
 .chat-new-btn svg {
@@ -89,23 +293,59 @@ $settings = aiphoto_get_settings();
     flex: 1;
     overflow-y: auto;
     padding: 4px 8px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.chat-history-list::-webkit-scrollbar {
+    display: none;
 }
 
 .chat-history-item {
     padding: 10px 12px;
-    border-radius: 8px;
+    border-radius: 10px;
     cursor: pointer;
     transition: all 150ms ease;
     margin-bottom: 2px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .chat-history-item:hover {
-    background: #e2e8f0;
+    background: #f3f4f6;
 }
 
 .chat-history-item.active {
-    background: #e0e7ff;
-    color: #7c3aed;
+    background: #eef2ff;
+    color: #4f46e5;
+}
+
+.chat-history-item-more {
+    opacity: 0;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+    transition: all 150ms ease;
+    flex-shrink: 0;
+    font-size: 18px;
+}
+
+.chat-history-item:hover .chat-history-item-more {
+    opacity: 1;
+}
+
+.chat-history-item-more:hover {
+    background: #e5e7eb;
+    color: #374151;
 }
 
 .chat-history-item-title {
@@ -129,13 +369,38 @@ $settings = aiphoto_get_settings();
     font-size: 0.8125rem;
 }
 
-/* 右侧聊天区域 */
+/* 右侧聊天区域（圆角+阴影区分） */
 .chat-main {
     flex: 1;
     display: flex;
     flex-direction: column;
     min-width: 0;
     overflow: hidden;
+    background: #fff;
+    border-radius: 24px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+    margin: 12px;
+    position: relative;
+    z-index: 1;
+}
+
+/* 聊天区顶部半透明遮罩 */
+.chat-scroll-fade {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 80px;
+    background: linear-gradient(to bottom, rgba(243,244,246,1) 0%, rgba(243,244,246,0.8) 40%, rgba(243,244,246,0) 100%);
+    pointer-events: none;
+    z-index: 5;
+    opacity: 0;
+    transition: opacity 200ms ease;
+    border-radius: 24px 24px 0 0;
+}
+
+.chat-scroll-fade.show {
+    opacity: 1;
 }
 
 .chat-messages {
@@ -149,10 +414,11 @@ $settings = aiphoto_get_settings();
 .chat-message {
     display: flex;
     align-items: flex-start;
-    margin-bottom: 24px;
-    max-width: 800px;
+    margin-bottom: 20px;
+    max-width: 900px;
     margin-left: auto;
     margin-right: auto;
+    padding: 0 40px;
     animation: fadeIn 0.3s ease;
 }
 
@@ -168,7 +434,7 @@ $settings = aiphoto_get_settings();
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
+    from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
@@ -176,36 +442,27 @@ $settings = aiphoto_get_settings();
     display: none;
 }
 
-.chat-message--user .chat-avatar {
-    background: linear-gradient(135deg, #7c3aed, #6d28d9);
-    color: #fff;
-}
-
-.chat-message--ai .chat-avatar {
-    background: linear-gradient(135deg, #f97316, #ea580c);
-    color: #fff;
-}
-
 .chat-bubble {
     padding: 12px 16px;
-    border-radius: 12px;
+    border-radius: 16px;
     font-size: 0.9375rem;
-    line-height: 1.7;
+    line-height: 1.6;
     word-break: break-word;
 }
 
 .chat-message--user .chat-bubble {
-    max-width: 500px;
-    background: transparent;
-    color: #0f172a;
+    max-width: 60%;
+    background: #f3f4f6;
+    color: #111827;
     border-bottom-right-radius: 4px;
     text-align: right;
+    margin-left: auto;
 }
 
 .chat-message--ai .chat-bubble {
-    max-width: 800px;
+    max-width: 95%;
     background: transparent;
-    color: #0f172a;
+    color: #111827;
     border-bottom-left-radius: 4px;
     padding: 0 16px;
 }
@@ -319,118 +576,107 @@ $settings = aiphoto_get_settings();
     font-size: 0.8125rem;
 }
 
-/* 欢迎界面 */
+/* 欢迎界面（Agnes AI 风格） */
 .chat-welcome {
     flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 40px 20px;
+    padding: 60px 20px;
 }
 
-.chat-welcome-logo {
-    width: 80px;
-    height: 80px;
-    margin-bottom: 24px;
-    background: linear-gradient(135deg, #7c3aed, #f97316);
-    border-radius: 50%;
+.chat-welcome-title {
+    font-size: 2.2rem;
+    font-weight: 300;
+    color: #1f2937;
+    margin: 0;
+    text-align: center;
+    letter-spacing: -0.02em;
+    line-height: 1.3;
+    font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.chat-welcome-gradient {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 500;
+}
+
+/* 欢迎语下方快捷标签 */
+.chat-welcome-tags {
     display: flex;
-    align-items: center;
+    flex-wrap: wrap;
     justify-content: center;
+    gap: 10px;
+    margin-top: 24px;
 }
 
-.chat-welcome-logo svg {
-    width: 40px;
-    height: 40px;
-    stroke: #fff;
-}
-
-.chat-welcome h2 {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #0f172a;
+/* 快捷标签（输入框下方，聊天时显示） */
+.chat-quick-tags {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 16px;
     margin-bottom: 8px;
 }
 
-.chat-welcome p {
-    color: #64748b;
-    font-size: 0.9375rem;
-    margin-bottom: 32px;
-}
-
-.chat-suggestions {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-    max-width: 500px;
-    width: 100%;
-}
-
-.chat-suggestion {
-    padding: 16px;
-    background: #fff;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    text-align: left;
+.chat-tag {
+    padding: 8px 16px;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    color: #374151;
     cursor: pointer;
     transition: all 150ms ease;
+    white-space: nowrap;
 }
 
-.chat-suggestion:hover {
-    border-color: #7c3aed;
-    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.1);
+.chat-tag:hover {
+    background: #eef2ff;
+    border-color: #818cf8;
+    color: #4f46e5;
 }
 
-.chat-suggestion-icon {
-    width: 32px;
-    height: 32px;
-    background: #f1f5f9;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 8px;
+.chat-tag-more {
+    background: transparent;
+    border: 1px dashed #d1d5db;
+    color: #6b7280;
 }
 
-.chat-suggestion-icon svg {
-    width: 18px;
-    height: 18px;
-    stroke: #64748b;
-}
-
-.chat-suggestion-text {
-    font-size: 0.875rem;
-    color: #475569;
-    line-height: 1.4;
-}
-
-/* 输入区域 */
+/* 输入区域（Agnes AI 风格 - 居中） */
 .chat-input-area {
-    padding: 16px 0 24px;
-    border-top: 1px solid #f1f5f9;
-    background: #fff;
+    padding: 16px 40px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
 }
 
 .chat-input-container {
-    max-width: 800px;
-    margin: 0 auto;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 16px;
-    overflow: hidden;
+    width: 100%;
+    max-width: 900px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 24px;
+    overflow: visible;
     transition: all 200ms ease;
 }
 
 .chat-input-container:focus-within {
-    border-color: #7c3aed;
-    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    border-color: #818cf8;
+    box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.15);
 }
 
 .chat-input-row {
     display: flex;
     align-items: flex-end;
-    padding: 8px 12px;
+    padding: 12px 16px;
+    gap: 8px;
 }
 
 .chat-input {
@@ -442,22 +688,22 @@ $settings = aiphoto_get_settings();
     resize: none;
     min-height: 24px;
     max-height: 120px;
-    padding: 8px 4px;
+    padding: 4px 0;
     font-family: inherit;
     line-height: 1.5;
 }
 
 .chat-input::placeholder {
-    color: #94a3b8;
+    color: #9ca3af;
 }
 
 .chat-send-btn {
     width: 36px;
     height: 36px;
-    background: linear-gradient(135deg, #7c3aed, #6d28d9);
+    background: #4f46e5;
     color: #fff;
     border: none;
-    border-radius: 10px;
+    border-radius: 50%;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -467,14 +713,13 @@ $settings = aiphoto_get_settings();
 }
 
 .chat-send-btn:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
+    background: #4f46e5;
+    color: #fff;
 }
 
 .chat-send-btn:disabled {
-    opacity: 0.4;
+    opacity: 0.5;
     cursor: not-allowed;
-    transform: none;
 }
 
 .chat-send-btn svg {
@@ -482,17 +727,46 @@ $settings = aiphoto_get_settings();
     height: 18px;
 }
 
-.chat-input-footer {
-    padding: 8px 16px;
+/* 输入区域下方操作按钮 */
+.chat-input-actions {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    border-top: 1px solid #f1f5f9;
+    padding: 4px 16px 8px;
+    gap: 8px;
+}
+
+.chat-action-btn {
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+    transition: all 150ms ease;
+}
+
+.chat-action-btn:hover {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.chat-action-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.chat-input-footer {
+    margin-top: 8px;
+    text-align: center;
 }
 
 .chat-input-hint {
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: #9ca3af;
 }
 
 /* 加载动画 */
@@ -518,88 +792,285 @@ $settings = aiphoto_get_settings();
     30% { transform: translateY(-6px); }
 }
 
+/* 滚动按钮（输入框正上方偏左） */
+.chat-scroll-btn {
+    position: absolute;
+    bottom: 145px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 28px;
+    height: 28px;
+    background: #fff;
+    border: 1px solid #d1d5db;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    z-index: 10;
+    opacity: 0;
+    transition: all 200ms ease;
+    pointer-events: none;
+}
+
+.chat-scroll-btn.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.chat-scroll-btn:hover {
+    border-color: #a78bfa;
+    box-shadow: 0 2px 10px rgba(167,139,250,0.2);
+}
+
+.chat-scroll-btn svg {
+    width: 14px;
+    height: 14px;
+    color: #1f2937;
+    stroke-width: 3;
+}
+
+/* 默认箭头朝下（滚到底部） */
+.chat-scroll-btn svg.arrow-up { display: none; }
+.chat-scroll-btn svg.arrow-down { display: block; }
+
+/* 在底部时箭头朝上（滚到顶部） */
+.chat-scroll-btn.at-bottom svg.arrow-up { display: block; }
+.chat-scroll-btn.at-bottom svg.arrow-down { display: none; }
+
+/* 三点菜单 */
+.chat-context-menu {
+    position: fixed;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    padding: 6px 0;
+    z-index: 1000;
+    min-width: 160px;
+    display: none;
+}
+
+.chat-context-menu.show {
+    display: block;
+}
+
+.chat-context-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    font-size: 0.875rem;
+    color: #374151;
+    cursor: pointer;
+    transition: background 100ms ease;
+}
+
+.chat-context-item:hover {
+    background: #f3f4f6;
+}
+
+.chat-context-item--danger {
+    color: #ef4444;
+}
+
+.chat-context-item--danger:hover {
+    background: #fef2f2;
+}
+
+.chat-context-item svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
 /* 移动端适配 */
 /* 手机端使用悬浮聊天框，此页面仅桌面端显示 */
 </style>
 
 <section class="chat-layout">
-    <!-- 左侧边栏 -->
+    <!-- 左侧边栏（严格按 Agnes AI 设计） -->
     <aside class="chat-sidebar" id="chatSidebar">
-        <div class="chat-sidebar-header">
-            <button class="chat-new-btn" id="chatNewBtn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 5v14M5 12h14"/>
+        <!-- 折叠按钮 -->
+        <div class="sidebar-header">
+            <button class="sidebar-collapse-btn" id="sidebarCollapseBtn" title="折叠侧边栏">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                    <line x1="9" y1="3" x2="9" y2="21"/>
                 </svg>
-                新对话
             </button>
         </div>
-        <div class="chat-history-header">
-            <span class="chat-history-title">最近对话</span>
+
+        <!-- 新任务按钮 -->
+        <div class="sidebar-nav">
+            <button class="sidebar-nav-item sidebar-nav-item--active" id="chatNewBtn" title="新任务">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+                <span>新任务</span>
+            </button>
+            <button class="sidebar-nav-item" title="搜索">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                    <circle cx="11" cy="11" r="8"/>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <span>搜索</span>
+            </button>
+            <button class="sidebar-nav-item" title="定时任务">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                </svg>
+                <span>定时任务</span>
+            </button>
+            <button class="sidebar-nav-item" title="库">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                    <ellipse cx="12" cy="5" rx="9" ry="3"/>
+                    <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+                    <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+                </svg>
+                <span>库</span>
+            </button>
         </div>
-        <div class="chat-history-list" id="chatHistoryList">
-            <div class="chat-history-empty">暂无对话记录</div>
+
+        <!-- 对话历史 -->
+        <div class="sidebar-history">
+            <div class="sidebar-history-header">
+                <span>所有任务</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                    <polyline points="6 9 12 15 18 9"/>
+                </svg>
+            </div>
+            <div class="chat-history-list" id="chatHistoryList">
+                <div class="chat-history-empty">暂无任务记录</div>
+            </div>
+        </div>
+
+        <!-- 底部图标 -->
+        <div class="sidebar-footer">
+            <button class="sidebar-footer-btn" title="工具箱">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/>
+                </svg>
+            </button>
+            <button class="sidebar-footer-btn" title="定时任务">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                </svg>
+            </button>
+            <button class="sidebar-footer-btn" title="设置">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
+                </svg>
+            </button>
+            <button class="sidebar-footer-btn" title="更多应用">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <rect x="3" y="3" width="7" height="7"/>
+                    <rect x="14" y="3" width="7" height="7"/>
+                    <rect x="14" y="14" width="7" height="7"/>
+                    <rect x="3" y="14" width="7" height="7"/>
+                </svg>
+            </button>
         </div>
     </aside>
 
     <!-- 右侧聊天区域 -->
     <main class="chat-main">
+        <!-- 顶部半透明遮罩 -->
+        <div class="chat-scroll-fade" id="scrollFade"></div>
         <div class="chat-messages" id="chatMessages">
             <!-- 欢迎界面 -->
             <div class="chat-welcome" id="chatWelcome">
-                <div class="chat-welcome-logo">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
-                    </svg>
-                </div>
-                <h2>你好，有什么想聊的？</h2>
-                <p>我可以帮你写文案、回答问题、提供创作灵感</p>
-                <div class="chat-suggestions">
-                    <button class="chat-suggestion" data-prompt="帮我写一段关于海边日落的描述">
-                        <div class="chat-suggestion-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                        </div>
-                        <div class="chat-suggestion-text">写一段海边日落描述</div>
-                    </button>
-                    <button class="chat-suggestion" data-prompt="解释一下什么是 AI 绘画">
-                        <div class="chat-suggestion-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                        </div>
-                        <div class="chat-suggestion-text">什么是 AI 绘画</div>
-                    </button>
-                    <button class="chat-suggestion" data-prompt="给我一些图片创作的灵感">
-                        <div class="chat-suggestion-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                        </div>
-                        <div class="chat-suggestion-text">给我创作灵感</div>
-                    </button>
-                    <button class="chat-suggestion" data-prompt="帮我优化这个提示词：一只可爱的猫咪">
-                        <div class="chat-suggestion-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
-                        </div>
-                        <div class="chat-suggestion-text">优化提示词</div>
-                    </button>
-                </div>
+                <h2 class="chat-welcome-title">
+                    <span class="chat-welcome-gradient">欢迎</span>
+                    我能为您做什么？
+                </h2>
             </div>
         </div>
 
-        <!-- 输入区域 -->
+        <!-- 欢迎语下方快捷标签 -->
+        <div class="chat-welcome-tags" id="chatWelcomeTags">
+            <button class="chat-tag" data-prompt="帮我制作一个 AI 幻灯片">AI 幻灯片</button>
+            <button class="chat-tag" data-prompt="帮我创建一个网站">创建网站</button>
+            <button class="chat-tag" data-prompt="帮我做 AI 设计">AI 设计</button>
+            <button class="chat-tag" data-prompt="帮我做 AI 表格">AI 表格</button>
+            <button class="chat-tag chat-tag-more">更多</button>
+        </div>
+
+        <!-- 输入区域（居中） -->
         <div class="chat-input-area">
             <div class="chat-input-container">
                 <div class="chat-input-row">
-                    <textarea class="chat-input" id="chatInput" placeholder="向 Aiphoto 提问..." rows="1"></textarea>
+                    <textarea class="chat-input" id="chatInput" placeholder="分配一个任务或提问任何问题" rows="1"></textarea>
                     <button class="chat-send-btn" id="chatSendBtn" disabled>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <!-- 发送图标 -->
+                        <svg class="icon-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <line x1="22" y1="2" x2="11" y2="13"/>
                             <polygon points="22 2 15 22 11 13 2 9 22 2"/>
                         </svg>
+                        <!-- 停止图标（默认隐藏） -->
+                        <svg class="icon-stop" viewBox="0 0 24 24" fill="currentColor" style="display:none;">
+                            <rect x="6" y="6" width="12" height="12" rx="2"/>
+                        </svg>
                     </button>
                 </div>
-                <div class="chat-input-footer">
-                    <span class="chat-input-hint">基于 Agnes AI · 内容仅供参考</span>
+                <div class="chat-input-actions">
+                    <button class="chat-action-btn" id="chatPlusBtn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"/>
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                    </button>
+                    <button class="chat-action-btn" id="chatAttachBtn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/>
+                        </svg>
+                    </button>
                 </div>
+            </div>
+            <div class="chat-input-footer">
+                <span class="chat-input-hint">基于 Agnes AI · 内容仅供参考</span>
             </div>
         </div>
     </main>
+
+    <!-- 滚动按钮（双向：上/下） -->
+    <button class="chat-scroll-btn" id="scrollBtn">
+        <!-- 箭头朝上（滚到顶部） -->
+        <svg class="arrow-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="19" x2="12" y2="5"/>
+            <polyline points="5 12 12 5 19 12"/>
+        </svg>
+        <!-- 箭头朝下（滚到底部） -->
+        <svg class="arrow-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <polyline points="19 12 12 19 5 12"/>
+        </svg>
+    </button>
+
+    <!-- 右键菜单 -->
+    <div class="chat-context-menu" id="chatContextMenu">
+        <div class="chat-context-item" data-action="share">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            分享
+        </div>
+        <div class="chat-context-item" data-action="rename">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            重命名
+        </div>
+        <div class="chat-context-item" data-action="favorite">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            添加到收藏夹
+        </div>
+        <div class="chat-context-item chat-context-item--danger" data-action="delete">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+            删除
+        </div>
+    </div>
 </section>
 
 <script>
@@ -616,6 +1087,27 @@ $settings = aiphoto_get_settings();
     var currentChatId = null;
     var conversationHistory = [];
     var isGenerating = false;
+    var contextMenu = null;
+    var contextTarget = null;
+
+    function setLoading(on) {
+        isGenerating = on;
+        var iconSend = chatSendBtn.querySelector('.icon-send');
+        var iconStop = chatSendBtn.querySelector('.icon-stop');
+        if (on) {
+            if (iconSend) iconSend.style.display = 'none';
+            if (iconStop) iconStop.style.display = 'block';
+            chatSendBtn.disabled = false;
+        } else {
+            if (iconSend) iconSend.style.display = 'block';
+            if (iconStop) iconStop.style.display = 'none';
+            chatSendBtn.disabled = chatInput.value.trim().length === 0;
+            // 移除所有加载动画
+            document.querySelectorAll('.chat-typing').forEach(function(el) {
+                el.remove();
+            });
+        }
+    }
 
     // 初始化
     init();
@@ -634,6 +1126,7 @@ $settings = aiphoto_get_settings();
         } else {
             // 没有保存的对话，显示欢迎界面
             chatMessages.innerHTML = getWelcomeHTML();
+            document.getElementById('chatWelcomeTags').style.display = 'flex';
             bindWelcomeEvents();
         }
         bindEvents();
@@ -661,14 +1154,109 @@ $settings = aiphoto_get_settings();
             }
         });
 
-        chatSendBtn.addEventListener('click', sendMessage);
+        // 发送/停止按钮切换
+        chatSendBtn.addEventListener('click', function() {
+            if (isGenerating) {
+                // 停止生成
+                if (genAbortController) genAbortController.abort();
+                setLoading(false);
+            } else {
+                sendMessage();
+            }
+        });
 
-        // 快捷建议
+        // 快捷建议（旧版兼容）
         document.querySelectorAll('.chat-suggestion').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 chatInput.value = this.getAttribute('data-prompt');
                 chatInput.dispatchEvent(new Event('input'));
                 sendMessage();
+            });
+        });
+
+        // 快捷标签
+        document.querySelectorAll('.chat-tag[data-prompt]').forEach(function(tag) {
+            tag.addEventListener('click', function() {
+                chatInput.value = this.getAttribute('data-prompt');
+                chatInput.dispatchEvent(new Event('input'));
+                sendMessage();
+            });
+        });
+
+        // 滚动按钮 + 顶部遮罩
+        var scrollBtn = document.getElementById('scrollBtn');
+        var scrollFade = document.getElementById('scrollFade');
+        if (scrollBtn || scrollFade) {
+            chatMessages.addEventListener('scroll', function() {
+                var maxScroll = chatMessages.scrollHeight - chatMessages.clientHeight;
+
+                // 滚动按钮逻辑
+                if (scrollBtn) {
+                    if (maxScroll > 100) {
+                        scrollBtn.classList.add('show');
+                        if (chatMessages.scrollTop >= maxScroll - 50) {
+                            scrollBtn.classList.add('at-bottom');
+                        } else {
+                            scrollBtn.classList.remove('at-bottom');
+                        }
+                    } else {
+                        scrollBtn.classList.remove('show');
+                    }
+                }
+
+                // 顶部遮罩逻辑
+                if (scrollFade) {
+                    if (chatMessages.scrollTop > 50) {
+                        scrollFade.classList.add('show');
+                    } else {
+                        scrollFade.classList.remove('show');
+                    }
+                }
+            });
+
+            if (scrollBtn) {
+                scrollBtn.addEventListener('click', function() {
+                    var maxScroll = chatMessages.scrollHeight - chatMessages.clientHeight;
+                    if (chatMessages.scrollTop >= maxScroll - 50) {
+                        chatMessages.scrollTo({ top: 0, behavior: 'smooth' });
+                    } else {
+                        chatMessages.scrollTo({ top: maxScroll, behavior: 'smooth' });
+                    }
+                });
+            }
+        }
+
+        // 侧边栏折叠
+        var collapseBtn = document.getElementById('sidebarCollapseBtn');
+        var sidebar = document.getElementById('chatSidebar');
+        if (collapseBtn && sidebar) {
+            collapseBtn.addEventListener('click', function() {
+                sidebar.classList.toggle('collapsed');
+            });
+        }
+
+        // 三点菜单
+        contextMenu = document.getElementById('chatContextMenu');
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.chat-context-menu') && !e.target.closest('.chat-history-item-more')) {
+                contextMenu.classList.remove('show');
+                contextTarget = null;
+            }
+        });
+
+        document.querySelectorAll('.chat-context-item').forEach(function(menuItem) {
+            menuItem.addEventListener('click', function() {
+                var action = this.getAttribute('data-action');
+                if (!contextTarget) return;
+                if (action === 'delete') {
+                    deleteChat(contextTarget);
+                } else if (action === 'rename') {
+                    var newName = prompt('请输入新名称：');
+                    if (newName) renameChat(contextTarget, newName);
+                }
+                contextMenu.classList.remove('show');
+                contextTarget = null;
             });
         });
     }
@@ -688,18 +1276,27 @@ $settings = aiphoto_get_settings();
     }
 
     function createNewChat() {
-        var chatId = 'chat_' + Date.now();
-        var chats = getAllChats();
-        chats[chatId] = {
-            id: chatId,
-            title: '新对话',
-            messages: [],
-            history: [],
-            created: Date.now(),
-            updated: Date.now()
-        };
-        saveAllChats(chats);
-        loadChat(chatId);
+        // 如果已经在欢迎页（无当前对话），不做任何操作
+        if (!currentChatId) {
+            // 检查是否已经在欢迎页
+            var welcome = document.getElementById('chatWelcome');
+            if (welcome) return; // 已经在欢迎页，不重复创建
+        }
+
+        // 保存当前对话（如果有消息）
+        if (currentChatId) {
+            saveCurrentChat();
+        }
+
+        // 切换到新对话状态
+        currentChatId = null;
+        localStorage.removeItem('aiphoto_current_chat');
+        conversationHistory = [];
+
+        // 显示欢迎页
+        chatMessages.innerHTML = getWelcomeHTML();
+        document.getElementById('chatWelcomeTags').style.display = 'flex';
+        bindWelcomeEvents();
         loadChatList();
     }
 
@@ -797,39 +1394,61 @@ $settings = aiphoto_get_settings();
 
         var html = '';
         sorted.forEach(function(chat) {
-            var time = formatTime(chat.updated);
             var active = chat.id === currentChatId ? ' active' : '';
             html += '<div class="chat-history-item' + active + '" data-chat-id="' + chat.id + '">' +
                     '<div class="chat-history-item-title">' + escapeHtml(chat.title) + '</div>' +
-                    '<div class="chat-history-item-time">' + time + '</div>' +
-                    '</div>';
+                    '<button class="chat-history-item-more" data-chat-id="' + chat.id + '">' +
+                    '<svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>' +
+                    '</button></div>';
         });
 
         chatHistoryList.innerHTML = html;
 
         // 绑定点击事件
         chatHistoryList.querySelectorAll('.chat-history-item').forEach(function(item) {
-            item.addEventListener('click', function() {
+            item.addEventListener('click', function(e) {
+                if (e.target.closest('.chat-history-item-more')) return;
                 loadChat(this.dataset.chatId);
             });
-            item.addEventListener('contextmenu', function(e) {
-                e.preventDefault();
-                if (confirm('确定要删除这个对话吗？')) {
-                    deleteChat(this.dataset.chatId);
-                }
+        });
+
+        // 绑定三点按钮点击事件
+        chatHistoryList.querySelectorAll('.chat-history-item-more').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                var chatId = this.dataset.chatId;
+                var rect = this.getBoundingClientRect();
+                contextMenu.style.left = rect.right + 'px';
+                contextMenu.style.top = rect.top + 'px';
+                contextTarget = chatId;
+                contextMenu.classList.add('show');
             });
         });
     }
 
     // ========== 消息处理 ==========
 
+    var genAbortController = null;
+
     function sendMessage() {
         var message = chatInput.value.trim();
         if (!message || isGenerating) return;
 
-        // 如果没有当前对话，创建一个
+        // 如果没有当前对话，创建一个新对话
         if (!currentChatId) {
-            createNewChat();
+            var chatId = 'chat_' + Date.now();
+            var chats = getAllChats();
+            chats[chatId] = {
+                id: chatId,
+                title: '新对话',
+                messages: [],
+                history: [],
+                created: Date.now(),
+                updated: Date.now()
+            };
+            saveAllChats(chats);
+            currentChatId = chatId;
+            localStorage.setItem('aiphoto_current_chat', chatId);
         }
 
         // 隐藏欢迎界面
@@ -842,13 +1461,20 @@ $settings = aiphoto_get_settings();
         addMessageToDOM(message, 'user', true);
         conversationHistory.push({ role: 'user', content: message });
 
+        // 立即保存用户消息到对话记录
+        saveCurrentChat();
+
         // 清空输入
         chatInput.value = '';
         chatInput.style.height = 'auto';
         chatSendBtn.disabled = true;
 
         // 显示加载
-        isGenerating = true;
+        setLoading(true);
+
+        // 隐藏欢迎标签
+        var welcomeTags = document.getElementById('chatWelcomeTags');
+        if (welcomeTags) welcomeTags.style.display = 'none';
 
         // 创建 AI 消息气泡（先显示加载动画）
         var aiDiv = document.createElement('div');
@@ -861,12 +1487,15 @@ $settings = aiphoto_get_settings();
         var fullReply = '';
         var firstChunk = true;
 
+        // 创建 AbortController 用于停止
+        genAbortController = new AbortController();
+
         var streamUrl = aiphotoAjax.url + '?action=aiphoto_chat_stream&nonce=' +
             encodeURIComponent(aiphotoAjax.nonce) +
             '&message=' + encodeURIComponent(message) +
             '&history=' + encodeURIComponent(JSON.stringify(conversationHistory.slice(-10)));
 
-        fetch(streamUrl)
+        fetch(streamUrl, { signal: genAbortController.signal })
             .then(function(response) {
                 var reader = response.body.getReader();
                 var decoder = new TextDecoder();
@@ -910,12 +1539,18 @@ $settings = aiphoto_get_settings();
                 return read();
             })
             .catch(function(err) {
+                if (err.name === 'AbortError') {
+                    // 用户取消
+                    setLoading(false);
+                    chatSendBtn.disabled = chatInput.value.trim().length === 0;
+                    return;
+                }
                 aiBubble.innerHTML = formatMessage('网络错误，请检查网络连接后重试。');
                 finishChatStream('');
             });
 
         function finishChatStream(reply) {
-            isGenerating = false;
+            setLoading(false);
             chatSendBtn.disabled = chatInput.value.trim().length === 0;
             chatInput.focus();
             if (reply) {
@@ -962,17 +1597,11 @@ $settings = aiphoto_get_settings();
 
     function getWelcomeHTML() {
         return '<div class="chat-welcome" id="chatWelcome">' +
-            '<div class="chat-welcome-logo">' +
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>' +
-            '</div>' +
-            '<h2>你好，有什么想聊的？</h2>' +
-            '<p>我可以帮你写文案、回答问题、提供创作灵感</p>' +
-            '<div class="chat-suggestions">' +
-            '<button class="chat-suggestion" data-prompt="帮我写一段关于海边日落的描述"><div class="chat-suggestion-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div><div class="chat-suggestion-text">写一段海边日落描述</div></button>' +
-            '<button class="chat-suggestion" data-prompt="解释一下什么是 AI 绘画"><div class="chat-suggestion-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="chat-suggestion-text">什么是 AI 绘画</div></button>' +
-            '<button class="chat-suggestion" data-prompt="给我一些图片创作的灵感"><div class="chat-suggestion-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><div class="chat-suggestion-text">给我创作灵感</div></button>' +
-            '<button class="chat-suggestion" data-prompt="帮我优化这个提示词：一只可爱的猫咪"><div class="chat-suggestion-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg></div><div class="chat-suggestion-text">优化提示词</div></button>' +
-            '</div></div>';
+            '<h2 class="chat-welcome-title">' +
+            '<span class="chat-welcome-gradient">欢迎</span>' +
+            ' 我能为您做什么？' +
+            '</h2>' +
+            '</div>';
     }
 
     function bindWelcomeEvents() {

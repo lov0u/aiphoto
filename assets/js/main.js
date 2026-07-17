@@ -154,19 +154,13 @@
     function initGeneratorForm() {
         var form = document.getElementById('generatorForm');
         var input = document.getElementById('generatorPrompt');
-        var btn = document.getElementById('generateBtn');
-        var btnText = document.getElementById('btnText');
         var result = document.getElementById('generatorResult');
         var resultImage = document.getElementById('resultImage');
         var errorMessage = document.getElementById('errorMessage');
         var sizeSelect = document.getElementById('generatorSize');
         var ratioSelect = document.getElementById('generatorRatio');
 
-        if (!form || !input || !btn) return;
-
-        input.addEventListener('input', function() {
-            btn.disabled = this.value.trim().length === 0 && img2imgFiles.length === 0;
-        });
+        if (!form || !input) return;
 
         // 预设模板点击（来自 GPT Image 2 Skill）
         // 只记录模板选择，不填充输入框，后台静默生效
@@ -193,47 +187,56 @@
             });
         }
 
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            if (isGenerating) return;
-            var prompt = input.value.trim();
-            if (!prompt && img2imgFiles.length === 0) return;
-
-            // 前端内容预检（第1层防护）
-            var blockedPatterns = ['nude','naked','裸体','裸露','露点','色情','porn','sexual','topless','nsfw','blood','gore','violence','drug','weapon','gun','bomb','毒品','武器','枪','bikini','泳装','比基尼','内衣','underwear','lingerie','性感','sexy','诱惑','seductive'];
-            var promptLower = prompt.toLowerCase();
-            for (var i = 0; i < blockedPatterns.length; i++) {
-                if (promptLower.indexOf(blockedPatterns[i]) !== -1) {
-                    showError('提示词包含不当内容，请修改后重试');
+        // 开始按钮点击
+        var genStartBtn = document.getElementById('genStartBtn');
+        if (genStartBtn) {
+            genStartBtn.addEventListener('click', function() {
+                console.log('DEBUG: genStartBtn clicked, isGenerating=' + isGenerating);
+                if (isGenerating) {
+                    // 停止生成
+                    stopGeneration();
                     return;
                 }
-            }
+                var prompt = input.value.trim();
+                if (!prompt && img2imgFiles.length === 0) return;
 
-            setLoading(true);
-            hideError();
-            if (result) result.classList.remove('has-image');
+                // 前端内容预检
+                var blockedPatterns = ['nude','naked','裸体','裸露','露点','色情','porn','sexual','topless','nsfw','blood','gore','violence','drug','weapon','gun','bomb','毒品','武器','枪','bikini','泳装','比基尼','内衣','underwear','lingerie','性感','sexy','诱惑','seductive'];
+                var promptLower = prompt.toLowerCase();
+                for (var i = 0; i < blockedPatterns.length; i++) {
+                    if (promptLower.indexOf(blockedPatterns[i]) !== -1) {
+                        showError('提示词包含不当内容，请修改后重试');
+                        return;
+                    }
+                }
 
-            // 保存完整生成状态
-            var genState = {
-                prompt: prompt,
-                userPrompt: prompt,
-                size: sizeSelect ? sizeSelect.value : '',
-                ratio: ratioSelect ? ratioSelect.value : '',
-                effect: document.getElementById('generatorEffect') ? document.getElementById('generatorEffect').value : '',
-                lens: document.getElementById('generatorLens') ? document.getElementById('generatorLens').value : '',
-                time: Date.now()
-            };
-            localStorage.setItem('aiphoto_pending_gen', JSON.stringify(genState));
+                setLoading(true);
+                hideError();
+                if (result) result.classList.remove('has-image');
 
-            doGenerate(genState);
-        });
+                var genState = {
+                    prompt: prompt,
+                    userPrompt: prompt,
+                    size: sizeSelect ? sizeSelect.value : '',
+                    ratio: ratioSelect ? ratioSelect.value : '',
+                    effect: document.getElementById('generatorEffect') ? document.getElementById('generatorEffect').value : '',
+                    lens: document.getElementById('generatorLens') ? document.getElementById('generatorLens').value : '',
+                    time: Date.now()
+                };
+                localStorage.setItem('aiphoto_pending_gen', JSON.stringify(genState));
+                doGenerate(genState);
+            });
+        }
+
+        // 禁用表单默认提交
+        form.addEventListener('submit', function(e) { e.preventDefault(); });
 
         var genPollTimer = null;
         var genAbortController = null;
 
         function doGenerate(state) {
+            console.log('DEBUG: doGenerate called with state:', JSON.stringify(state));
             genAbortController = new AbortController();
-            var btnText = document.getElementById('btnText');
             var progressBox = document.getElementById('genProgressBox');
 
             // 清空并显示进度框
@@ -258,7 +261,7 @@
             addProgress('开始生成...');
             addProgress('AI 正在分析提示词...');
 
-            // 第一步：先调用 AI 增强（快速，单独请求）
+            // 第一步：AI 增强提示词
             var aiParams = new URLSearchParams({
                 action: 'aiphoto_ai_enhance',
                 nonce: aiphotoAjax.nonce,
@@ -269,27 +272,25 @@
             });
 
             fetch(aiphotoAjax.url + '?' + aiParams.toString())
-                .then(function(r) {
-                    if (!r.ok) throw new Error('AI增强请求失败');
-                    return r.json();
-                })
+                .then(function(r) { return r.json(); })
                 .then(function(aiData) {
-                    if (!aiData.success) {
-                        addProgress('AI增强失败，使用原始提示词');
-                        return aiData;
+                    var finalPrompt = state.prompt;
+                    if (aiData.success && aiData.data && aiData.data.enhanced) {
+                        finalPrompt = aiData.data.enhanced;
+                        // 过滤 Midjourney 风格参数
+                        finalPrompt = finalPrompt.replace(/\s*--\w+\s+\S+/g, '').trim();
+                        addProgress('AI 分析完成');
+                    } else {
+                        addProgress('AI 增强跳过，使用原始提示词');
                     }
-                    addProgress('AI 分析完成，开始生成图片...');
-                    return aiData;
+                    addProgress('正在生成图片...');
 
-                    // 第二步：用增强后的提示词调用图片生成
+                    // 第二步：生成图片
                     var formData = new FormData();
                     formData.append('action', 'aiphoto_generate');
                     formData.append('nonce', aiphotoAjax.nonce);
-                    // 过滤 Midjourney 风格的参数（--ar, --chaos, --style 等）
-                    var finalPrompt = (aiData.success && aiData.data.enhanced) ? aiData.data.enhanced : state.prompt;
-                    finalPrompt = finalPrompt.replace(/\s*--\w+\s+\S+/g, '').trim();
                     formData.append('prompt', finalPrompt);
-                    formData.append('user_prompt', state.userPrompt || state.prompt || '转换图片');
+                    formData.append('user_prompt', state.userPrompt || state.prompt || '');
                     formData.append('size', state.size || '');
                     formData.append('ratio', state.ratio || '');
                     formData.append('effect', state.effect || '');
@@ -302,8 +303,10 @@
                 .then(function(data) {
                     localStorage.removeItem('aiphoto_pending_gen');
                     if (data.success) {
+                        addProgress('生成完成');
                         showSuccess(data.data);
                     } else {
+                        addProgress('错误: ' + (data.data.message || '生成失败'));
                         showError(data.data.message || aiphotoAjax.i18n.error);
                     }
                 })
@@ -314,7 +317,7 @@
                         return;
                     }
                     console.error('AIPhoto错误:', err);
-                    addProgress('错误: ' + (err.message || '生成失败'));
+                    addProgress('错误: ' + (err.message || '网络错误'));
                     showError(aiphotoAjax.i18n.error);
                 })
                 .finally(function() { setLoading(false); });
@@ -398,33 +401,23 @@
 
         function setLoading(on) {
             isGenerating = on;
+            var startBtn = document.getElementById('genStartBtn');
+            var progressBox = document.getElementById('genProgressBox');
+            var welcomeMsg = document.getElementById('genWelcomeMsg');
+
             if (on) {
-                btn.disabled = true;
-                btnText.textContent = '生成中';
-                // 创建停止按钮到容器内
-                var stopBtn = document.getElementById('stopGenBtn');
-                if (!stopBtn) {
-                    stopBtn = document.createElement('button');
-                    stopBtn.type = 'button';
-                    stopBtn.id = 'stopGenBtn';
-                    stopBtn.textContent = '停止生成';
-                    stopBtn.onclick = function() { stopGeneration(); };
-                    btn.parentNode.appendChild(stopBtn);
-                }
-                stopBtn.style.cssText = 'margin-left:12px;padding:14px 24px;background:#ef4444;color:#fff;border:none;border-radius:var(--radius-md);font-size:1rem;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;';
-                // 移动端停止按钮占满宽度
-                if (window.innerWidth <= 768) {
-                    stopBtn.style.cssText = 'margin-left:0;margin-top:8px;padding:14px 24px;background:#ef4444;color:#fff;border:none;border-radius:var(--radius-md);font-size:1rem;font-weight:600;cursor:pointer;font-family:inherit;width:100%;display:block;text-align:center;box-sizing:border-box;';
-                    btn.parentNode.style.flexDirection = 'column';
-                } else {
-                    btn.parentNode.style.flexDirection = 'row';
-                }
+                // 生成中：按钮变"停止"，清空进度框
+                if (startBtn) { startBtn.textContent = '停止'; startBtn.style.background = '#ef4444'; }
+                if (progressBox) { progressBox.innerHTML = ''; progressBox.scrollTop = 0; }
             } else {
-                btn.disabled = input.value.trim().length === 0 && img2imgFiles.length === 0;
-                btnText.textContent = '生成';
-                var stopBtn = document.getElementById('stopGenBtn');
-                if (stopBtn) stopBtn.style.display = 'none';
-                btn.parentNode.style.flexDirection = 'row';
+                // 空闲：按钮变"开始"，显示欢迎语
+                if (startBtn) startBtn.textContent = '开始';
+                if (progressBox) {
+                    progressBox.style.display = 'flex';
+                    progressBox.style.alignItems = 'center';
+                    progressBox.style.justifyContent = 'center';
+                    progressBox.innerHTML = '<div id="genWelcomeMsg" style="font-size:14px;font-weight:600;color:#8b5cf6;">输入描述，点击开始生成图片</div>';
+                }
             }
         }
 
@@ -433,6 +426,7 @@
             if (genPollTimer) clearInterval(genPollTimer);
             localStorage.removeItem('aiphoto_pending_gen');
             setLoading(false);
+            hideError();
         }
 
         function showSuccess(data) {

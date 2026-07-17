@@ -372,25 +372,21 @@ if ( $page === 'home' && isset( $_SERVER['REQUEST_URI'] ) ) {
                 <form class="gen-form" id="generatorForm" novalidate>
                     <div class="gen-input-group">
                         <label for="generatorPrompt" class="gen-label">提示词</label>
-                        <textarea id="generatorPrompt" class="gen-textarea" rows="3"
-                                  placeholder="描述你想生成的图片，例如：夕阳下的宁静湖面，群山倒映在水中，金色阳光洒满水面..."
+                        <textarea id="generatorPrompt" class="gen-textarea" rows="2"
+                                  placeholder="描述你想生成的图片，例如：夕阳下的宁静湖面..."
                                   required maxlength="500"></textarea>
                     </div>
 
-                    <!-- 预设模板选择器（来自 GPT Image 2 Skill） -->
+                    <!-- 快捷选项 -->
                     <div class="gen-template-row" style="margin-bottom:8px;">
-                        <label class="gen-label">快速模板</label>
+                        <label class="gen-label">快捷选项</label>
                         <div class="gen-template-tags" id="templateTags" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;">
-                            <span class="gen-template-tag" data-template="portrait" style="cursor:pointer;padding:4px 10px;border-radius:12px;background:#f0f0f0;font-size:12px;transition:all .2s;">人像</span>
-                            <span class="gen-template-tag" data-template="landscape" style="cursor:pointer;padding:4px 10px;border-radius:12px;background:#f0f0f0;font-size:12px;transition:all .2s;">风景</span>
-                            <span class="gen-template-tag" data-template="product" style="cursor:pointer;padding:4px 10px;border-radius:12px;background:#f0f0f0;font-size:12px;transition:all .2s;">产品</span>
-                            <span class="gen-template-tag" data-template="anime" style="cursor:pointer;padding:4px 10px;border-radius:12px;background:#f0f0f0;font-size:12px;transition:all .2s;">动漫</span>
-                            <span class="gen-template-tag" data-template="poster" style="cursor:pointer;padding:4px 10px;border-radius:12px;background:#f0f0f0;font-size:12px;transition:all .2s;">海报</span>
-                            <span class="gen-template-tag" data-template="fantasy" style="cursor:pointer;padding:4px 10px;border-radius:12px;background:#f0f0f0;font-size:12px;transition:all .2s;">奇幻</span>
-                            <span class="gen-template-tag" data-template="cyberpunk" style="cursor:pointer;padding:4px 10px;border-radius:12px;background:#f0f0f0;font-size:12px;transition:all .2s;">赛博朋克</span>
-                            <span class="gen-template-tag" data-template="chinese_ink" style="cursor:pointer;padding:4px 10px;border-radius:12px;background:#f0f0f0;font-size:12px;transition:all .2s;">水墨</span>
-                            <span class="gen-template-tag" data-template="cinematic" style="cursor:pointer;padding:4px 10px;border-radius:12px;background:#f0f0f0;font-size:12px;transition:all .2s;">电影感</span>
-                            <span class="gen-template-tag" data-template="infographic" style="cursor:pointer;padding:4px 10px;border-radius:12px;background:#f0f0f0;font-size:12px;transition:all .2s;">信息图</span>
+                            <span class="gen-template-tag" data-template="beauty" style="cursor:pointer;padding:4px 10px;border-radius:12px;background:#f0f0f0;font-size:12px;transition:all .2s;">美颜</span>
+                            <span class="gen-template-tag" data-template="soft_light" style="cursor:pointer;padding:4px 10px;border-radius:12px;background:#f0f0f0;font-size:12px;transition:all .2s;">柔光</span>
+                            <span class="gen-template-tag" data-template="hd" style="cursor:pointer;padding:4px 10px;border-radius:12px;background:#f0f0f0;font-size:12px;transition:all .2s;">高清</span>
+                            <span class="gen-template-tag" data-template="film" style="cursor:pointer;padding:4px 10px;border-radius:12px;background:#f0f0f0;font-size:12px;transition:all .2s;">胶片感</span>
+                            <span class="gen-template-tag" data-template="magazine" style="cursor:pointer;padding:4px 10px;border-radius:12px;background:#f0f0f0;font-size:12px;transition:all .2s;">杂志风</span>
+                            <span class="gen-template-tag" data-template="dreamy" style="cursor:pointer;padding:4px 10px;border-radius:12px;background:#f0f0f0;font-size:12px;transition:all .2s;">梦幻</span>
                         </div>
                     </div>
 
@@ -469,19 +465,15 @@ if ( $page === 'home' && isset( $_SERVER['REQUEST_URI'] ) ) {
                         </div>
                     </div>
 
-                    <!-- 工作进度区域 -->
-                    <div id="genProgressBox" style="display:none;margin-top:8px;border:1px solid #e0e0e0;border-radius:8px;padding:10px 14px;background:#fafafa;min-height:60px;max-height:150px;overflow-y:auto;font-size:13px;color:#555;font-family:monospace;line-height:1.8;">
-                    </div>
-
-                    <div id="genBtnWrap" style="display:flex;align-items:stretch;gap:0;margin-top:8px;">
-                        <button type="submit" class="gen-submit-btn" id="generateBtn" disabled style="margin-top:0;flex:1;">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                            </svg>
-                            <span id="btnText">生成图片</span>
-                        </button>
-                    </div>
                 </form>
+
+                    <!-- 进度框 + 开始/停止按钮（始终显示，在表单外面） -->
+                    <div id="genProgressWrap" style="margin-top:8px;display:flex;align-items:stretch;gap:8px;">
+                        <div id="genProgressBox" style="flex:1;border:1px solid #e0e0e0;border-radius:8px;padding:8px 12px;background:#fafafa;height:66px;overflow-y:auto;display:flex;align-items:center;justify-content:center;">
+                            <div id="genWelcomeMsg" style="font-size:14px;font-weight:600;color:#8b5cf6;">输入描述，点击开始生成图片</div>
+                        </div>
+                        <button type="button" id="genStartBtn" style="flex-shrink:0;padding:0 24px;background:#ef4444;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;">开始</button>
+                    </div>
 
                 <div class="gen-result" id="generatorResult">
                     <div class="gen-result-header"><h3>生成结果</h3></div>
