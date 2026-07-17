@@ -793,35 +793,27 @@ html, body.chat-page {
 }
 
 /* 滚动按钮（输入框正上方偏左） */
-/* 内联滚动按钮（快捷标签中间） */
-.chat-scroll-btn-inline {
-    width: 28px;
-    height: 28px;
+/* 固定滚动按钮（输入框上方，始终可见） */
+.chat-scroll-btn-fixed {
+    width: 30px;
+    height: 30px;
     background: #fff;
     border: 1px solid #d1d5db;
     border-radius: 50%;
     cursor: pointer;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-    opacity: 0;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.12);
     transition: all 200ms ease;
-    pointer-events: none;
-    flex-shrink: 0;
 }
 
-.chat-scroll-btn-inline.show {
-    opacity: 1;
-    pointer-events: auto;
-}
-
-.chat-scroll-btn-inline:hover {
+.chat-scroll-btn-fixed:hover {
     border-color: #a78bfa;
-    box-shadow: 0 2px 8px rgba(167,139,250,0.2);
+    box-shadow: 0 2px 10px rgba(167,139,250,0.25);
 }
 
-.chat-scroll-btn-inline svg {
+.chat-scroll-btn-fixed svg {
     width: 14px;
     height: 14px;
     color: #374151;
@@ -829,12 +821,12 @@ html, body.chat-page {
 }
 
 /* 默认箭头朝下 */
-.chat-scroll-btn-inline svg.arrow-up { display: none; }
-.chat-scroll-btn-inline svg.arrow-down { display: block; }
+.chat-scroll-btn-fixed svg.arrow-up { display: none; }
+.chat-scroll-btn-fixed svg.arrow-down { display: block; }
 
 /* 在底部时箭头朝上 */
-.chat-scroll-btn-inline.at-bottom svg.arrow-up { display: block; }
-.chat-scroll-btn-inline.at-bottom svg.arrow-down { display: none; }
+.chat-scroll-btn-fixed.at-bottom svg.arrow-up { display: block; }
+.chat-scroll-btn-fixed.at-bottom svg.arrow-down { display: none; }
 
 /* 旧的滚动按钮隐藏 */
 .chat-scroll-btn { display: none !important; }
@@ -1021,8 +1013,14 @@ html, body.chat-page {
         <div class="chat-welcome-tags" id="chatWelcomeTags">
             <button class="chat-tag" data-prompt="帮我制作一个 AI 幻灯片">AI 幻灯片</button>
             <button class="chat-tag" data-prompt="帮我创建一个网站">创建网站</button>
-            <!-- 滚动按钮放在快捷标签中间 -->
-            <button class="chat-scroll-btn-inline" id="scrollBtn">
+            <button class="chat-tag" data-prompt="帮我做 AI 设计">AI 设计</button>
+            <button class="chat-tag" data-prompt="帮我做 AI 表格">AI 表格</button>
+            <button class="chat-tag chat-tag-more">更多</button>
+        </div>
+
+        <!-- 滚动按钮（固定在输入框上方，聊天区中间） -->
+        <div id="scrollBtnWrap" style="display:none;text-align:center;padding:4px 0;">
+            <button class="chat-scroll-btn-fixed" id="scrollBtn">
                 <svg class="arrow-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <line x1="12" y1="19" x2="12" y2="5"/>
                     <polyline points="5 12 12 5 19 12"/>
@@ -1032,9 +1030,6 @@ html, body.chat-page {
                     <polyline points="19 12 12 19 5 12"/>
                 </svg>
             </button>
-            <button class="chat-tag" data-prompt="帮我做 AI 设计">AI 设计</button>
-            <button class="chat-tag" data-prompt="帮我做 AI 表格">AI 表格</button>
-            <button class="chat-tag chat-tag-more">更多</button>
         </div>
 
         <!-- 输入区域（居中） -->
@@ -1205,24 +1200,25 @@ html, body.chat-page {
             });
         });
 
-        // 内联滚动按钮 + 顶部遮罩
+        // 固定滚动按钮 + 顶部遮罩
         var scrollBtn = document.getElementById('scrollBtn');
+        var scrollBtnWrap = document.getElementById('scrollBtnWrap');
         var scrollFade = document.getElementById('scrollFade');
         if (scrollBtn || scrollFade) {
             chatMessages.addEventListener('scroll', function() {
                 var maxScroll = chatMessages.scrollHeight - chatMessages.clientHeight;
 
                 // 滚动按钮逻辑
-                if (scrollBtn) {
+                if (scrollBtn && scrollBtnWrap) {
                     if (maxScroll > 100) {
-                        scrollBtn.classList.add('show');
+                        scrollBtnWrap.style.display = 'block';
                         if (chatMessages.scrollTop >= maxScroll - 50) {
                             scrollBtn.classList.add('at-bottom');
                         } else {
                             scrollBtn.classList.remove('at-bottom');
                         }
                     } else {
-                        scrollBtn.classList.remove('show');
+                        scrollBtnWrap.style.display = 'none';
                     }
                 }
 
