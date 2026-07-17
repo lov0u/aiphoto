@@ -182,7 +182,7 @@
                 tag.style.background = '#6c5ce7';
                 tag.style.color = '#fff';
                 // 获取模板详情
-                fetch(aiphotoAjax.url.replace('admin-ajax.php', '') + 'admin-ajax.php?action=aiphoto_get_template_detail&key=' + key)
+                fetch(aiphotoAjax.url + '?action=aiphoto_get_template_detail&key=' + key)
                     .then(function(r) { return r.json(); })
                     .then(function(data) {
                         if (data.success && data.data) {

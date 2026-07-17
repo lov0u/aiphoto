@@ -143,7 +143,7 @@ function aiphoto_translate_prompt( $prompt ) {
         '湖' => 'serene lake', '雪' => 'snow', '雨' => 'rain', '月亮' => 'moon',
         '大海' => 'ocean', '城市' => 'cityscape', '沙漠' => 'desert landscape',
         '瀑布' => 'waterfall', '樱花' => 'cherry blossom', '竹林' => 'bamboo forest',
-        '草地' => 'green meadow', '河流' => 'river', '大海' => 'ocean',
+        '草地' => 'green meadow', '河流' => 'river',
         // 风格
         '古风' => 'traditional Chinese style', '水墨' => 'Chinese ink painting',
         '二次元' => 'anime style', '赛博朋克' => 'cyberpunk style', '写实' => 'photorealistic',
@@ -233,7 +233,7 @@ function aiphoto_portrait_enhance( $prompt ) {
     if ( ! preg_match( '/(skin|皮肤|肤质|skin texture)/i', $prompt ) ) {
         $portrait_suffix .= ', natural skin texture';
     }
-    if ( ! preg_match( '/(pose|standing|sitting|walking|pose|站|坐|走|leaning)/i', $prompt ) ) {
+    if ( ! preg_match( '/(pose|standing|sitting|walking|站|坐|走|leaning)/i', $prompt ) ) {
         $portrait_suffix .= ', natural relaxed pose';
     }
     return $prompt . $portrait_suffix;
