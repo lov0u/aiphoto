@@ -516,15 +516,15 @@
         var close = el.querySelector('.lightbox-close');
 
         document.addEventListener('click', function(e) {
-            var item = e.target.closest('.recent-item');
+            var item = e.target.closest('.recent-item') || e.target.closest('.lightbox-trigger') || e.target.closest('.masonry-link');
             if (item) {
                 var fullUrl = item.getAttribute('data-full');
-                var prompt = item.getAttribute('data-prompt');
+                var prompt = item.getAttribute('data-prompt') || item.getAttribute('title') || '';
                 var thumb = item.getAttribute('data-thumb');
                 var urlToUse = fullUrl || thumb;
                 if (urlToUse) {
                     img.src = urlToUse;
-                    title.textContent = prompt || '';
+                    title.textContent = prompt;
                     el.classList.add('is-open');
                     document.body.style.overflow = 'hidden';
                 }
