@@ -235,37 +235,63 @@
         function doGenerate(state) {
             genAbortController = new AbortController();
 
-            var formData = new FormData();
-            formData.append('action', 'aiphoto_generate');
-            formData.append('nonce', aiphotoAjax.nonce);
-            formData.append('prompt', state.prompt || '转换图片');
-            formData.append('user_prompt', state.userPrompt || state.prompt || '转换图片');
-            formData.append('size', state.size || '');
-            formData.append('ratio', state.ratio || '');
-            formData.append('effect', state.effect || '');
-            formData.append('lens', state.lens || '');
-            formData.append('template', currentTemplate || '');
+            // 显示进度条
+            var progressEl = document.getElementById('genProgress');
+            var progressText = document.getElementById('genProgressText');
+            if (progressEl) {
+                progressEl.style.display = 'block';
+                progressText.textContent = '准备中...';
+            }
 
-            fetch(aiphotoAjax.url, { method: 'POST', body: formData, keepalive: true, signal: genAbortController.signal })
-                .then(function(r) { return r.json(); })
-                .then(function(data) {
+            // 使用 SSE 流式接收进度
+            var params = new URLSearchParams({
+                action: 'aiphoto_generate',
+                stream: '1',
+                nonce: aiphotoAjax.nonce,
+                prompt: state.prompt || '转换图片',
+                user_prompt: state.userPrompt || state.prompt || '转换图片',
+                size: state.size || '',
+                ratio: state.ratio || '',
+                effect: state.effect || '',
+                lens: state.lens || '',
+                template: currentTemplate || ''
+            });
+
+            var eventSource = new EventSource(aiphotoAjax.url + '?' + params.toString());
+
+            eventSource.onmessage = function(e) {
+                var data = JSON.parse(e.data);
+
+                if (data.progress) {
+                    // 进度更新
+                    if (progressText) progressText.textContent = data.progress;
+                } else if (data.success) {
+                    // 成功
+                    eventSource.close();
                     localStorage.removeItem('aiphoto_pending_gen');
-                    if (data.success) {
-                        showSuccess(data.data);
-                    } else {
-                        showError(data.data.message || aiphotoAjax.i18n.error);
-                    }
-                })
-                .catch(function(err) {
-                    if (err.name === 'AbortError') {
-                        localStorage.removeItem('aiphoto_pending_gen');
-                        setLoading(false);
-                        return;
-                    }
-                    console.error('AIPhoto错误:', err);
-                    showError(aiphotoAjax.i18n.error);
-                })
-                .finally(function() { setLoading(false); });
+                    if (progressEl) progressEl.style.display = 'none';
+                    showSuccess(data.data);
+                    setLoading(false);
+                } else if (data.error) {
+                    // 错误
+                    eventSource.close();
+                    localStorage.removeItem('aiphoto_pending_gen');
+                    if (progressEl) progressEl.style.display = 'none';
+                    showError(data.error);
+                    setLoading(false);
+                }
+            };
+
+            eventSource.onerror = function() {
+                eventSource.close();
+                localStorage.removeItem('aiphoto_pending_gen');
+                if (progressEl) progressEl.style.display = 'none';
+                // 不显示错误，因为可能是正常结束
+                setLoading(false);
+            };
+
+            // 存储 EventSource 以便停止
+            genAbortController.eventSource = eventSource;
         }
 
         // 轮询检查图片是否已生成
@@ -379,9 +405,14 @@
         }
 
         function stopGeneration() {
-            if (genAbortController) genAbortController.abort();
+            if (genAbortController) {
+                if (genAbortController.eventSource) genAbortController.eventSource.close();
+                genAbortController.abort();
+            }
             if (genPollTimer) clearInterval(genPollTimer);
             localStorage.removeItem('aiphoto_pending_gen');
+            var progressEl = document.getElementById('genProgress');
+            if (progressEl) progressEl.style.display = 'none';
             setLoading(false);
         }
 

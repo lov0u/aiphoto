@@ -749,11 +749,57 @@ add_action( 'wp_ajax_aiphoto_get_template_detail', 'aiphoto_get_template_detail'
 add_action( 'wp_ajax_nopriv_aiphoto_get_template_detail', 'aiphoto_get_template_detail' );
 
 // ============================================================
-// AJAX 图片生成
+// AJAX 图片生成（SSE 流式进度）
 // ============================================================
 function aiphoto_generate_image() {
-    if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( $_POST['nonce'], 'aiphoto_nonce' ) ) {
-        wp_send_json_error( array( 'message' => __( '安全验证失败。', 'aiphoto' ) ) );
+    // 支持 SSE 流式输出进度
+    $is_stream = isset( $_GET['stream'] ) && $_GET['stream'] == '1';
+
+    if ( $is_stream ) {
+        // SSE 模式：通过 GET 参数接收数据
+        if ( ! isset( $_GET['nonce'] ) || ! wp_verify_nonce( $_GET['nonce'], 'aiphoto_nonce' ) ) {
+            header('Content-Type: text/event-stream');
+            echo "data: " . wp_json_encode(array('error' => '安全验证失败')) . "\n\n";
+            echo "data: [DONE]\n\n";
+            exit;
+        }
+
+        @ini_set('output_buffering', 'Off');
+        @ini_set('zlib.output_compression', 'False');
+        while (ob_get_level() > 0) { @ob_end_clean(); }
+
+        header('Content-Type: text/event-stream');
+        header('Cache-Control: no-cache');
+        header('Connection: keep-alive');
+        header('X-Accel-Buffering: no');
+
+        $prompt     = sanitize_text_field( $_GET['prompt'] ?? '' );
+        $image_data = array();
+        $effect     = sanitize_text_field( $_GET['effect'] ?? '' );
+        $lens       = sanitize_text_field( $_GET['lens'] ?? '' );
+        $template   = sanitize_text_field( $_GET['template'] ?? '' );
+        $size       = sanitize_text_field( $_GET['size'] ?? '' );
+        $ratio      = sanitize_text_field( $_GET['ratio'] ?? '' );
+
+        if ( empty( $prompt ) ) {
+            echo "data: " . wp_json_encode(array('error' => '请输入提示词')) . "\n\n";
+            echo "data: [DONE]\n\n";
+            exit;
+        }
+
+        // 进度辅助函数
+        $send_progress = function($text) {
+            echo "data: " . wp_json_encode(array('progress' => $text)) . "\n\n";
+            @flush();
+        };
+
+        $send_progress('🧠 AI 正在分析提示词...');
+
+    } else {
+        // 普通 AJAX 模式（兼容旧版）
+        if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( $_POST['nonce'], 'aiphoto_nonce' ) ) {
+            wp_send_json_error( array( 'message' => __( '安全验证失败。', 'aiphoto' ) ) );
+        }
     }
 
     $prompt     = sanitize_text_field( $_POST['prompt'] ?? '' );
@@ -821,25 +867,32 @@ function aiphoto_generate_image() {
 
     // ========== 增强链：AI 为主，精简后处理 ==========
     // 0. AI 提示词增强（核心：用 agnes-2.0-flash + SKILL 知识库生成高质量英文提示词）
+    if ( $is_stream ) $send_progress('🔍 AI 正在根据 SKILL 规则优化提示词...');
     $ai_enhanced = aiphoto_ai_enhance_prompt( $prompt, $effect, $lens, $template );
     if ( ! empty( $ai_enhanced ) && $ai_enhanced !== $prompt ) {
         $prompt = $ai_enhanced;
+        if ( $is_stream ) $send_progress('✅ AI 提示词优化完成');
     } else {
         // AI 失败时，用基础增强作为后备
         $prompt = aiphoto_translate_prompt( $prompt );
         $prompt = aiphoto_enhance_prompt( $prompt, $effect, $lens );
+        if ( $is_stream ) $send_progress('⚠️ AI 增强跳过，使用基础增强');
     }
 
     // 1. 内容审核（检查 AI 生成的提示词）
     $check_result = aiphoto_content_check( $prompt );
     if ( ! $check_result['pass'] ) {
+        if ( $is_stream ) {
+            echo "data: " . wp_json_encode(array('error' => $check_result['message'])) . "\n\n";
+            echo "data: [DONE]\n\n";
+            exit;
+        }
         wp_send_json_error( array( 'message' => $check_result['message'] ) );
         exit;
     }
 
     // 2. 追加效果/镜头关键词（AI 已处理大部分，这里只做补充）
     if ( ! empty( $effect ) && isset( $effect_map[ $effect ] ) ) {
-        // 检查 AI 输出是否已包含效果关键词，避免重复
         $effect_keywords = explode( ',', $effect_map[ $effect ] );
         $first_keyword = trim( $effect_keywords[0] );
         if ( stripos( $prompt, $first_keyword ) === false ) {
@@ -860,6 +913,7 @@ function aiphoto_generate_image() {
     }
 
     error_log( 'AIPhoto: [ENHANCE] Final prompt: ' . $prompt );
+    if ( $is_stream ) $send_progress('🎨 正在生成图片，请稍候...');
 
     $body = array(
         'model'  => $model,
@@ -891,6 +945,11 @@ function aiphoto_generate_image() {
 
     if ( is_wp_error( $response ) ) {
         error_log( 'AIPhoto: [GENERATE] API error: ' . $response->get_error_message() );
+        if ( $is_stream ) {
+            echo "data: " . wp_json_encode(array('error' => $response->get_error_message())) . "\n\n";
+            echo "data: [DONE]\n\n";
+            exit;
+        }
         wp_send_json_error( array( 'message' => $response->get_error_message() ) );
     }
 
@@ -898,22 +957,34 @@ function aiphoto_generate_image() {
     if ( 200 !== $status_code ) {
         $resp_body = wp_remote_retrieve_body( $response );
         $error_msg = aiphoto_parse_api_error( $resp_body );
+        if ( $is_stream ) {
+            echo "data: " . wp_json_encode(array('error' => $error_msg)) . "\n\n";
+            echo "data: [DONE]\n\n";
+            exit;
+        }
         wp_send_json_error( array( 'message' => $error_msg ) );
     }
 
     $data = json_decode( wp_remote_retrieve_body( $response ), true );
 
     if ( ! isset( $data['data'][0]['url'] ) ) {
-        wp_send_json_error( array( 'message' => __( 'API返回无效。', 'aiphoto' ) ) );
+        $err = __( 'API返回无效。', 'aiphoto' );
+        if ( $is_stream ) {
+            echo "data: " . wp_json_encode(array('error' => $err)) . "\n\n";
+            echo "data: [DONE]\n\n";
+            exit;
+        }
+        wp_send_json_error( array( 'message' => $err ) );
     }
 
     $image_url = $data['data'][0]['url'];
     error_log( 'AIPhoto: [DEBUG] API 返回图片 URL: ' . $image_url );
+    if ( $is_stream ) $send_progress('📦 图片已生成，正在保存...');
 
     // 检查是否已有相同提示词的图片，有则不重复保存
-    $user_prompt = trim( sanitize_text_field( $_POST['user_prompt'] ?? '' ) );
+    $user_prompt = trim( sanitize_text_field( $_GET['user_prompt'] ?? $_POST['user_prompt'] ?? '' ) );
     if ( empty( $user_prompt ) ) {
-        $user_prompt = trim( sanitize_text_field( $_POST['prompt'] ?? '' ) );
+        $user_prompt = trim( sanitize_text_field( $_GET['prompt'] ?? $_POST['prompt'] ?? '' ) );
     }
 
     error_log( 'AIPhoto: [DEBUG] 去重检查 - user_prompt: ' . $user_prompt );
@@ -957,14 +1028,20 @@ function aiphoto_generate_image() {
         $old_id = $existing[0];
         $old_url = wp_get_attachment_image_url( $old_id, 'aiphoto-large' );
         error_log( 'AIPhoto: [DEBUG] 已有相同提示词图片，跳过保存 - ID: ' . $old_id );
-        wp_send_json_success( array(
+        $result = array(
             'url'             => get_post_meta( $old_id, '_aiphoto_original_url', true ) ?: $image_url,
             'gallery_url'     => $old_url ?: $image_url,
             'prompt'          => $prompt,
             'attachment_id'   => $old_id,
             'save_status'     => 'skipped',
             'save_error'      => '',
-        ) );
+        );
+        if ( $is_stream ) {
+            echo "data: " . wp_json_encode(array('success' => true, 'data' => $result)) . "\n\n";
+            echo "data: [DONE]\n\n";
+            exit;
+        }
+        wp_send_json_success( $result );
         return;
     }
 
@@ -986,14 +1063,22 @@ function aiphoto_generate_image() {
         error_log( 'AIPhoto: [ERROR] 保存失败: ' . $save_error );
     }
 
-    wp_send_json_success( array(
+    $result = array(
         'url'             => $image_url,
         'gallery_url'     => $gallery_url,
         'prompt'          => $prompt,
         'attachment_id'   => is_wp_error( $compressed_result ) ? 0 : $compressed_result->ID,
         'save_status'     => is_wp_error( $compressed_result ) ? 'failed' : 'success',
         'save_error'      => $save_error,
-    ) );
+    );
+
+    if ( $is_stream ) {
+        echo "data: " . wp_json_encode(array('success' => true, 'data' => $result)) . "\n\n";
+        echo "data: [DONE]\n\n";
+        exit;
+    }
+
+    wp_send_json_success( $result );
 }
 add_action( 'wp_ajax_aiphoto_generate', 'aiphoto_generate_image' );
 add_action( 'wp_ajax_nopriv_aiphoto_generate', 'aiphoto_generate_image' );

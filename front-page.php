@@ -478,6 +478,11 @@ if ( $page === 'home' && isset( $_SERVER['REQUEST_URI'] ) ) {
                             <span id="btnSpinner" class="spinner" style="display:none;"></span>
                         </button>
                     </div>
+                    <!-- 生成进度显示 -->
+                    <div id="genProgress" style="display:none;margin-top:8px;padding:10px 14px;background:#f8f9fa;border-radius:8px;font-size:13px;color:#666;">
+                        <span id="genProgressIcon" style="margin-right:6px;">⏳</span>
+                        <span id="genProgressText">准备中...</span>
+                    </div>
                 </form>
 
                 <div class="gen-result" id="generatorResult">
