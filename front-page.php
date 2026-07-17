@@ -377,6 +377,23 @@ if ( $page === 'home' && isset( $_SERVER['REQUEST_URI'] ) ) {
                                   required maxlength="500"></textarea>
                     </div>
 
+                    <!-- 预设模板选择器（来自 GPT Image 2 Skill） -->
+                    <div class="gen-template-row" style="margin-bottom:8px;">
+                        <label class="gen-label">快速模板</label>
+                        <div class="gen-template-tags" id="templateTags" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;">
+                            <span class="gen-template-tag" data-template="portrait" style="cursor:pointer;padding:4px 10px;border-radius:12px;background:#f0f0f0;font-size:12px;transition:all .2s;">人像</span>
+                            <span class="gen-template-tag" data-template="landscape" style="cursor:pointer;padding:4px 10px;border-radius:12px;background:#f0f0f0;font-size:12px;transition:all .2s;">风景</span>
+                            <span class="gen-template-tag" data-template="product" style="cursor:pointer;padding:4px 10px;border-radius:12px;background:#f0f0f0;font-size:12px;transition:all .2s;">产品</span>
+                            <span class="gen-template-tag" data-template="anime" style="cursor:pointer;padding:4px 10px;border-radius:12px;background:#f0f0f0;font-size:12px;transition:all .2s;">动漫</span>
+                            <span class="gen-template-tag" data-template="poster" style="cursor:pointer;padding:4px 10px;border-radius:12px;background:#f0f0f0;font-size:12px;transition:all .2s;">海报</span>
+                            <span class="gen-template-tag" data-template="fantasy" style="cursor:pointer;padding:4px 10px;border-radius:12px;background:#f0f0f0;font-size:12px;transition:all .2s;">奇幻</span>
+                            <span class="gen-template-tag" data-template="cyberpunk" style="cursor:pointer;padding:4px 10px;border-radius:12px;background:#f0f0f0;font-size:12px;transition:all .2s;">赛博朋克</span>
+                            <span class="gen-template-tag" data-template="chinese_ink" style="cursor:pointer;padding:4px 10px;border-radius:12px;background:#f0f0f0;font-size:12px;transition:all .2s;">水墨</span>
+                            <span class="gen-template-tag" data-template="cinematic" style="cursor:pointer;padding:4px 10px;border-radius:12px;background:#f0f0f0;font-size:12px;transition:all .2s;">电影感</span>
+                            <span class="gen-template-tag" data-template="infographic" style="cursor:pointer;padding:4px 10px;border-radius:12px;background:#f0f0f0;font-size:12px;transition:all .2s;">信息图</span>
+                        </div>
+                    </div>
+
                     <div class="gen-btn-row">
                         <button type="button" class="gen-mode-btn gen-mode-btn--active" id="txt2imgBtn">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>

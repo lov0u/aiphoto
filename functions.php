@@ -375,6 +375,204 @@ function aiphoto_content_check( $prompt ) {
 }
 
 // ============================================================
+// 预设提示词模板（来自 GPT Image 2 Skill 的 17 大类）
+// ============================================================
+function aiphoto_get_predefined_templates() {
+    return array(
+        // 1. UI样机
+        'ui-mockup' => array(
+            'name' => 'UI界面样机',
+            'name_en' => 'UI Mockup',
+            'prompt' => 'UI mockup of {app_name}, {screen_type} screen, {design_style} design, clean interface, professional UI/UX, high resolution, realistic device frame, screen interaction elements',
+            'defaults' => array( 'effect' => '3d-render', 'lens' => 'eye-level' ),
+        ),
+        // 2. 产品视觉
+        'product' => array(
+            'name' => '产品摄影',
+            'name_en' => 'Product Visuals',
+            'prompt' => 'Professional product photography of {product}, clean white studio background, soft even lighting, commercial quality, sharp focus throughout, reflection on glossy surface, 8K resolution, marketing-ready',
+            'defaults' => array( 'effect' => 'photorealistic', 'lens' => 'close-up' ),
+        ),
+        // 3. 地图类
+        'map' => array(
+            'name' => '地图/路线图',
+            'name_en' => 'Maps',
+            'prompt' => 'Illustrated map of {location}, {map_style} style, marked points of interest, decorative landmarks, legend/key, vibrant colors, clear typography, tourist-friendly design',
+            'defaults' => array( 'effect' => 'cartoon', 'lens' => 'birdseye' ),
+        ),
+        // 4. 幻灯片
+        'slide' => array(
+            'name' => '幻灯片/演示文稿',
+            'name_en' => 'Slides & Visual Docs',
+            'prompt' => 'Professional presentation slide about {topic}, {layout} layout, clean typography, data visualization, charts and graphs, corporate design style, high resolution, print quality',
+            'defaults' => array( 'effect' => '3d-render', 'lens' => 'eye-level' ),
+        ),
+        // 5. 海报/活动
+        'poster' => array(
+            'name' => '品牌海报',
+            'name_en' => 'Poster & Campaigns',
+            'prompt' => 'Professional brand poster featuring {subject}, {style} style, {lighting}, bold headline typography, {composition}, high resolution, print quality, marketing visual',
+            'defaults' => array( 'effect' => 'cinematic', 'lens' => 'portrait' ),
+        ),
+        // 6. 人像/角色
+        'portrait' => array(
+            'name' => '人像摄影',
+            'name_en' => 'Portraits & Characters',
+            'prompt' => 'Professional portrait photography of {subject}, {expression}, natural skin texture, soft studio lighting with key light and fill light, shallow depth of field, shot on 85mm f/1.4 lens, bokeh background, 8K resolution, professional color science',
+            'defaults' => array( 'effect' => 'photorealistic', 'lens' => 'portrait' ),
+        ),
+        // 7. 场景/插画
+        'scene' => array(
+            'name' => '场景/插画',
+            'name_en' => 'Scenes & Illustrations',
+            'prompt' => 'Atmospheric illustration of {scene}, {mood} mood, {time_of_day} lighting, detailed environment, storytelling composition, art direction, high resolution, concept art quality',
+            'defaults' => array( 'effect' => 'fantasy', 'lens' => 'wide-angle' ),
+        ),
+        // 8. 编辑工作流
+        'editing' => array(
+            'name' => '图片编辑',
+            'name_en' => 'Editing Workflows',
+            'prompt' => 'Professional photo editing: {edit_instruction}, maintaining original quality, seamless blending, natural result, high resolution output',
+            'defaults' => array( 'effect' => 'photorealistic', 'lens' => 'eye-level' ),
+        ),
+        // 9. 头像/个人资料
+        'avatar' => array(
+            'name' => '风格化头像',
+            'name_en' => 'Avatars & Profile',
+            'prompt' => 'Stylized avatar of {subject}, {avatar_style} style, clean background, centered composition, detailed features, vibrant colors, social media ready, high resolution',
+            'defaults' => array( 'effect' => 'cartoon', 'lens' => 'close-up' ),
+        ),
+        // 10. 分镜/序列
+        'storyboard' => array(
+            'name' => '分镜/漫画',
+            'name_en' => 'Storyboards & Sequences',
+            'prompt' => 'Sequential art storyboard of {story}, {panel_count} panels, {art_style} style, narrative flow, dialogue bubbles, cinematic composition, professional quality',
+            'defaults' => array( 'effect' => 'anime', 'lens' => 'eye-level' ),
+        ),
+        // 11. 网格/拼贴
+        'grid' => array(
+            'name' => '网格/拼贴',
+            'name_en' => 'Grids & Collages',
+            'prompt' => 'Grid collage of {subject}, {grid_size} layout, unified design theme, consistent color palette, each panel distinct yet cohesive, high resolution, print ready',
+            'defaults' => array( 'effect' => 'photorealistic', 'lens' => 'eye-level' ),
+        ),
+        // 12. 品牌/包装
+        'branding' => array(
+            'name' => '品牌/包装设计',
+            'name_en' => 'Branding & Packaging',
+            'prompt' => 'Brand identity design for {brand_name}, {package_type}, {design_style} style, logo placement, color scheme, material texture, professional product photography, high resolution',
+            'defaults' => array( 'effect' => 'photorealistic', 'lens' => 'close-up' ),
+        ),
+        // 13. 文字排版
+        'typography' => array(
+            'name' => '文字排版海报',
+            'name_en' => 'Typography & Text Layout',
+            'prompt' => 'Typography poster with "{text}" in {font_style} font, {text_layout} layout, {color_scheme} colors, graphic design, print quality, high resolution, editorial design',
+            'defaults' => array( 'effect' => '3d-render', 'lens' => 'eye-level' ),
+        ),
+        // 14. 素材/道具
+        'asset' => array(
+            'name' => '图标/素材',
+            'name_en' => 'Assets & Props',
+            'prompt' => '{asset_type} icon set, {icon_style} style, consistent design language, clean edges, isolated on transparent/white background, high resolution, UI ready',
+            'defaults' => array( 'effect' => '3d-render', 'lens' => 'eye-level' ),
+        ),
+        // 15. 学术图表
+        'academic' => array(
+            'name' => '学术图表',
+            'name_en' => 'Academic Figures',
+            'prompt' => 'Academic figure: {figure_type} about {topic}, white background, clean geometric shapes, publication-ready, professional typography, low saturation engineering colors, precise layout',
+            'defaults' => array( 'effect' => 'photorealistic', 'lens' => 'eye-level' ),
+        ),
+        // 16. 信息图
+        'infographic' => array(
+            'name' => '信息图',
+            'name_en' => 'Infographics',
+            'prompt' => 'Professional infographic about {topic}, {infographic_style} style, data visualization, icons and illustrations, clear hierarchy, {color_scheme}, high information density, print quality',
+            'defaults' => array( 'effect' => '3d-render', 'lens' => 'eye-level' ),
+        ),
+        // 17. 技术图表
+        'technical' => array(
+            'name' => '技术架构图',
+            'name_en' => 'Technical Diagrams',
+            'prompt' => 'Technical diagram: {diagram_type}, dark grid background, monospace font, role-based color coding, arrows and connectors, clean layout, engineering diagram quality, high resolution',
+            'defaults' => array( 'effect' => '3d-render', 'lens' => 'eye-level' ),
+        ),
+        // 额外风格类模板
+        'anime' => array(
+            'name' => '动漫风格',
+            'name_en' => 'Anime Style',
+            'prompt' => 'Anime style illustration of {subject}, cel shading, vibrant colors, detailed expressive eyes, clean linework, dynamic composition, soft gradients, studio quality, 4K resolution',
+            'defaults' => array( 'effect' => 'anime', 'lens' => 'portrait' ),
+        ),
+        'fantasy' => array(
+            'name' => '奇幻场景',
+            'name_en' => 'Fantasy Scene',
+            'prompt' => 'Epic fantasy scene of {subject}, ethereal magical lighting, mystical atmosphere, enchanted environment, volumetric fog, god rays, dreamlike quality, concept art, 8K resolution',
+            'defaults' => array( 'effect' => 'fantasy', 'lens' => 'wide-angle' ),
+        ),
+        'chinese_ink' => array(
+            'name' => '中国水墨',
+            'name_en' => 'Chinese Ink Painting',
+            'prompt' => 'Traditional Chinese ink painting of {subject}, flowing brush strokes with varying ink density, minimalist composition emphasizing negative space, monochromatic black ink with subtle grey washes, poetic atmosphere, masterful brushwork technique',
+            'defaults' => array( 'effect' => 'watercolor', 'lens' => 'wide-angle' ),
+        ),
+        'cyberpunk' => array(
+            'name' => '赛博朋克',
+            'name_en' => 'Cyberpunk',
+            'prompt' => 'Cyberpunk cityscape of {scene}, neon glow lighting with volumetric haze, futuristic architecture, rain-slicked streets reflecting lights, high contrast, dark atmosphere, holographic displays, 8K resolution',
+            'defaults' => array( 'effect' => 'cyberpunk', 'lens' => 'wide-angle' ),
+        ),
+        'cinematic' => array(
+            'name' => '电影感',
+            'name_en' => 'Cinematic',
+            'prompt' => 'Cinematic scene of {subject}, dramatic golden hour lighting with rim light, anamorphic lens flare, film grain, shallow depth of field, movie scene quality, professional color grading, 8K resolution',
+            'defaults' => array( 'effect' => 'cinematic', 'lens' => 'portrait' ),
+        ),
+        'landscape' => array(
+            'name' => '风景摄影',
+            'name_en' => 'Landscape Photography',
+            'prompt' => 'Stunning landscape photography of {scene}, golden hour lighting, dramatic sky with clouds, leading lines, rule of thirds composition, shot on wide angle 16mm lens, deep depth of field, vivid colors, 8K resolution',
+            'defaults' => array( 'effect' => 'photorealistic', 'lens' => 'wide-angle' ),
+        ),
+    );
+}
+
+/**
+ * AJAX 获取预设模板列表
+ */
+function aiphoto_get_templates() {
+    $templates = aiphoto_get_predefined_templates();
+    // 只返回 name 和 name_en，不返回完整 prompt
+    $list = array();
+    foreach ( $templates as $key => $tpl ) {
+        $list[] = array(
+            'key'     => $key,
+            'name'    => $tpl['name'],
+            'name_en' => $tpl['name_en'],
+        );
+    }
+    wp_send_json_success( $list );
+}
+add_action( 'wp_ajax_aiphoto_get_templates', 'aiphoto_get_templates' );
+add_action( 'wp_ajax_nopriv_aiphoto_get_templates', 'aiphoto_get_templates' );
+
+/**
+ * AJAX 根据模板key获取完整模板
+ */
+function aiphoto_get_template_detail() {
+    $key = sanitize_text_field( $_GET['key'] ?? '' );
+    $templates = aiphoto_get_predefined_templates();
+    if ( isset( $templates[ $key ] ) ) {
+        wp_send_json_success( $templates[ $key ] );
+    } else {
+        wp_send_json_error( array( 'message' => '模板不存在' ) );
+    }
+}
+add_action( 'wp_ajax_aiphoto_get_template_detail', 'aiphoto_get_template_detail' );
+add_action( 'wp_ajax_nopriv_aiphoto_get_template_detail', 'aiphoto_get_template_detail' );
+
+// ============================================================
 // AJAX 图片生成
 // ============================================================
 function aiphoto_generate_image() {

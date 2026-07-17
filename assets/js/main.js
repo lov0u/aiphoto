@@ -169,6 +169,40 @@
             btn.disabled = this.value.trim().length === 0 && img2imgFiles.length === 0;
         });
 
+        // 预设模板点击（来自 GPT Image 2 Skill）
+        var templateTags = document.getElementById('templateTags');
+        if (templateTags) {
+            templateTags.addEventListener('click', function(e) {
+                var tag = e.target.closest('.gen-template-tag');
+                if (!tag) return;
+                var key = tag.getAttribute('data-template');
+                // 高亮选中
+                var allTags = templateTags.querySelectorAll('.gen-template-tag');
+                allTags.forEach(function(t) { t.style.background = '#f0f0f0'; t.style.color = ''; });
+                tag.style.background = '#6c5ce7';
+                tag.style.color = '#fff';
+                // 获取模板详情
+                fetch(aiphotoAjax.url.replace('admin-ajax.php', '') + 'admin-ajax.php?action=aiphoto_get_template_detail&key=' + key)
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        if (data.success && data.data) {
+                            var tpl = data.data;
+                            // 填充提示词（将占位符替换为空，让用户自己填）
+                            var prompt = tpl.prompt.replace(/\{[^}]+\}/g, '').replace(/,\s*,/g, ',').replace(/,\s*$/g, '').trim();
+                            input.value = prompt;
+                            input.dispatchEvent(new Event('input'));
+                            // 自动设置默认效果和镜头
+                            if (tpl.defaults) {
+                                var effectSel = document.getElementById('generatorEffect');
+                                var lensSel = document.getElementById('generatorLens');
+                                if (effectSel && tpl.defaults.effect) effectSel.value = tpl.defaults.effect;
+                                if (lensSel && tpl.defaults.lens) lensSel.value = tpl.defaults.lens;
+                            }
+                        }
+                    });
+            });
+        }
+
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             if (isGenerating) return;
