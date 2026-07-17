@@ -170,30 +170,27 @@
         });
 
         // 预设模板点击（来自 GPT Image 2 Skill）
+        // 只记录模板选择，不填充输入框，后台静默生效
+        var currentTemplate = ''; // 当前选中的模板key
         var templateTags = document.getElementById('templateTags');
         if (templateTags) {
             templateTags.addEventListener('click', function(e) {
                 var tag = e.target.closest('.gen-template-tag');
                 if (!tag) return;
                 var key = tag.getAttribute('data-template');
-                // 高亮选中
+                // 高亮/取消选中
                 var allTags = templateTags.querySelectorAll('.gen-template-tag');
-                allTags.forEach(function(t) { t.style.background = '#f0f0f0'; t.style.color = ''; });
-                tag.style.background = '#6c5ce7';
-                tag.style.color = '#fff';
-                // 获取模板详情
-                fetch(aiphotoAjax.url + '?action=aiphoto_get_template_detail&key=' + key)
-                    .then(function(r) { return r.json(); })
-                    .then(function(data) {
-                        if (data.success && data.data) {
-                            var tpl = data.data;
-                            // 填充提示词（将占位符替换为空，让用户自己填）
-                            var prompt = tpl.prompt.replace(/\{[^}]+\}/g, '').replace(/,\s*,/g, ',').replace(/,\s*$/g, '').trim();
-                            input.value = prompt;
-                            input.dispatchEvent(new Event('input'));
-                            // 不自动设置效果和镜头，保留用户手动选择
-                        }
-                    });
+                if (currentTemplate === key) {
+                    // 再次点击取消选中
+                    currentTemplate = '';
+                    tag.style.background = '#f0f0f0';
+                    tag.style.color = '';
+                } else {
+                    allTags.forEach(function(t) { t.style.background = '#f0f0f0'; t.style.color = ''; });
+                    tag.style.background = '#6c5ce7';
+                    tag.style.color = '#fff';
+                    currentTemplate = key;
+                }
             });
         }
 
@@ -247,6 +244,7 @@
             formData.append('ratio', state.ratio || '');
             formData.append('effect', state.effect || '');
             formData.append('lens', state.lens || '');
+            formData.append('template', currentTemplate || '');
 
             fetch(aiphotoAjax.url, { method: 'POST', body: formData, keepalive: true, signal: genAbortController.signal })
                 .then(function(r) { return r.json(); })

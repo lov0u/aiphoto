@@ -378,7 +378,7 @@ function aiphoto_content_check( $prompt ) {
 /**
  * 用 AI 模型将用户简短描述转换为高质量英文提示词
  */
-function aiphoto_ai_enhance_prompt( $user_prompt, $effect = '', $lens = '' ) {
+function aiphoto_ai_enhance_prompt( $user_prompt, $effect = '', $lens = '', $template = '' ) {
     $settings = aiphoto_get_settings();
     if ( empty( $settings['api_key'] ) ) return $user_prompt;
 
@@ -425,6 +425,38 @@ function aiphoto_ai_enhance_prompt( $user_prompt, $effect = '', $lens = '' ) {
     if ( $lens === 'macro' ) $extra .= '\n镜头：微距，极端特写，浅景深。';
     if ( $lens === 'birdseye' ) $extra .= '\n镜头：鸟瞰视角，俯拍。';
     if ( $lens === 'panoramic' ) $extra .= '\n镜头：全景，宽幅画面。';
+
+    // 模板上下文（静默生效，用户不可见）
+    $template_desc = array(
+        'portrait'   => '\n模板类型：人像摄影，需要清晰的人物主体，自然的肤色和表情。',
+        'landscape'  => '\n模板类型：风景摄影，需要壮阔的自然场景，良好的光线和构图。',
+        'product'    => '\n模板类型：产品摄影，需要清晰的商品主体，干净的背景，商业品质。',
+        'anime'      => '\n模板类型：动漫风格，需要日式动画美学，鲜艳色彩，清晰线条。',
+        'poster'     => '\n模板类型：品牌海报，需要强视觉冲击力，清晰的层次，适合印刷。',
+        'fantasy'    => '\n模板类型：奇幻场景，需要魔法氛围，梦幻光影，史诗感。',
+        'cyberpunk'  => '\n模板类型：赛博朋克，需要霓虹灯，未来感，高对比度。',
+        'chinese_ink'=> '\n模板类型：中国水墨画，需要墨色渐变，留白构图，东方美学。',
+        'cinematic'  => '\n模板类型：电影感，需要戏剧性光影，浅景深，电影色彩。',
+        'infographic'=> '\n模板类型：信息图，需要数据可视化，清晰层级，专业排版。',
+        'scene'      => '\n模板类型：场景插画，需要氛围感，故事性，艺术指导。',
+        'editing'    => '\n模板类型：图片编辑，需要自然的修改效果，保持原始质量。',
+        'avatar'     => '\n模板类型：风格化头像，需要居中构图，干净背景，适合社交媒体。',
+        'storyboard' => '\n模板类型：分镜漫画，需要叙事性，多格布局，对话气泡。',
+        'grid'       => '\n模板类型：网格拼贴，需要统一主题，协调配色，每个面板独立。',
+        'branding'   => '\n模板类型：品牌包装，需要品牌标识，材质质感，商业摄影品质。',
+        'typography' => '\n模板类型：文字排版，需要文字为主体，字体层级，设计感。',
+        'asset'      => '\n模板类型：图标素材，需要成套设计，统一风格，干净边缘。',
+        'academic'   => '\n模板类型：学术图表，需要白色背景，几何精确，出版物品质。',
+        'technical'  => '\n模板类型：技术架构图，需要暗色网格背景，等宽字体，工程图表品质。',
+        'ui-mockup'  => '\n模板类型：UI样机，需要界面展示，设备框架，交互元素。',
+        'map'        => '\n模板类型：地图，需要地标标注，图例，插画风格。',
+        'slide'      => '\n模板类型：幻灯片，需要数据可视化，企业设计，清晰排版。',
+    );
+    if ( ! empty( $template ) && isset( $template_desc[ $template ] ) ) {
+        $extra .= $template_desc[ $template ];
+    }
+
+    $system_prompt .= $extra;
 
     $system_prompt .= $extra;
 
@@ -706,8 +738,9 @@ function aiphoto_generate_image() {
     }
 
     // 构建请求体
-    $effect = sanitize_text_field( $_POST['effect'] ?? '' );
-    $lens   = sanitize_text_field( $_POST['lens'] ?? '' );
+    $effect   = sanitize_text_field( $_POST['effect'] ?? '' );
+    $lens     = sanitize_text_field( $_POST['lens'] ?? '' );
+    $template = sanitize_text_field( $_POST['template'] ?? '' );
 
     // 特效和镜头翻译（增强版 - 参考 Flux Best Practices）
     $effect_map = array(
@@ -736,7 +769,7 @@ function aiphoto_generate_image() {
 
     // ========== 增强链：12步提示词优化 ==========
     // 0. AI 提示词增强（用 agnes-2.0-flash 分析用户输入，生成高质量英文提示词）
-    $ai_enhanced = aiphoto_ai_enhance_prompt( $prompt, $effect, $lens );
+    $ai_enhanced = aiphoto_ai_enhance_prompt( $prompt, $effect, $lens, $template );
     if ( ! empty( $ai_enhanced ) && $ai_enhanced !== $prompt ) {
         $prompt = $ai_enhanced;
     }
