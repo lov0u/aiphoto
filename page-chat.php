@@ -1493,7 +1493,7 @@ html, body.chat-page {
         var streamUrl = aiphotoAjax.url + '?action=aiphoto_chat_stream&nonce=' +
             encodeURIComponent(aiphotoAjax.nonce) +
             '&message=' + encodeURIComponent(message) +
-            '&history=' + encodeURIComponent(JSON.stringify(conversationHistory.slice(-30)));
+            '&history=' + encodeURIComponent(JSON.stringify(conversationHistory.slice(-100)));
 
         fetch(streamUrl, { signal: genAbortController.signal })
             .then(function(response) {
