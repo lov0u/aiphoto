@@ -11,12 +11,6 @@ $settings = aiphoto_get_settings();
 <script>document.body.classList.add('chat-page');</script>
 
 <style>
-/* 固定页面不滚动，但保留页脚给爬虫 */
-html, body.chat-page {
-    overflow: hidden;
-    height: 100%;
-}
-
 /* 初始隐藏，避免闪烁 */
 .chat-layout {
     visibility: hidden;
@@ -32,7 +26,7 @@ html, body.chat-page {
     margin-top: 80px;
     background: #fff;
     position: relative;
-    padding: 0;
+    overflow: hidden;
 }
 
 /* 左侧边栏（Agnes AI 风格） */
