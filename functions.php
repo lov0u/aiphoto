@@ -214,17 +214,17 @@ function aiphoto_dependency_infer( $prompt ) {
 
 /**
  * 人像结构化增强（面部/皮肤/姿势）
+ * 注意：只在镜头为 portrait 时才增强，避免场景描述被强制变成特写
  */
-function aiphoto_portrait_enhance( $prompt ) {
-    $portrait_keywords = array( 'portrait', 'person', 'woman', 'man', '人像', '人物', '美女', '帅哥', 'girl', 'boy', 'lady', 'gentleman' );
-    $is_portrait = false;
-    foreach ( $portrait_keywords as $kw ) {
-        if ( mb_stripos( $prompt, $kw ) !== false ) {
-            $is_portrait = true;
-            break;
-        }
+function aiphoto_portrait_enhance( $prompt, $lens = '' ) {
+    // 只有镜头选"人像镜头"时才增强面部细节
+    if ( $lens !== 'portrait' ) return $prompt;
+
+    // 只有纯人像描述（没有场景动作词）才增强
+    $scene_words = array( '摘', '摘桃', '采', '做', '走', '跑', '跳', '游泳', '做饭', '画画', '弹琴', 'reading', 'cooking', 'running', 'jumping', 'swimming', 'picking' );
+    foreach ( $scene_words as $w ) {
+        if ( mb_stripos( $prompt, $w ) !== false ) return $prompt;
     }
-    if ( ! $is_portrait ) return $prompt;
 
     $portrait_suffix = '';
     if ( ! preg_match( '/(eye|眼睛|眼|eyes)/i', $prompt ) ) {
@@ -232,9 +232,6 @@ function aiphoto_portrait_enhance( $prompt ) {
     }
     if ( ! preg_match( '/(skin|皮肤|肤质|skin texture)/i', $prompt ) ) {
         $portrait_suffix .= ', natural skin texture';
-    }
-    if ( ! preg_match( '/(pose|standing|sitting|walking|站|坐|走|leaning)/i', $prompt ) ) {
-        $portrait_suffix .= ', natural relaxed pose';
     }
     return $prompt . $portrait_suffix;
 }
@@ -651,8 +648,8 @@ function aiphoto_generate_image() {
     $prompt = aiphoto_era_enhance( $prompt );
     // 4. 依赖自动推断（古装→中式服装等）
     $prompt = aiphoto_dependency_infer( $prompt );
-    // 5. 人像结构化增强
-    $prompt = aiphoto_portrait_enhance( $prompt );
+    // 5. 人像结构化增强（仅人像镜头时增强）
+    $prompt = aiphoto_portrait_enhance( $prompt, $lens );
     // 6. 色温增强
     $prompt = aiphoto_color_enhance( $prompt );
     // 7. 构图规则自动补充

@@ -191,13 +191,7 @@
                             var prompt = tpl.prompt.replace(/\{[^}]+\}/g, '').replace(/,\s*,/g, ',').replace(/,\s*$/g, '').trim();
                             input.value = prompt;
                             input.dispatchEvent(new Event('input'));
-                            // 自动设置默认效果和镜头
-                            if (tpl.defaults) {
-                                var effectSel = document.getElementById('generatorEffect');
-                                var lensSel = document.getElementById('generatorLens');
-                                if (effectSel && tpl.defaults.effect) effectSel.value = tpl.defaults.effect;
-                                if (lensSel && tpl.defaults.lens) lensSel.value = tpl.defaults.lens;
-                            }
+                            // 不自动设置效果和镜头，保留用户手动选择
                         }
                     });
             });
