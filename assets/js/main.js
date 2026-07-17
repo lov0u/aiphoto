@@ -92,6 +92,9 @@
         var sidebar = document.getElementById('agnesRecentSidebar');
         var sendBtn = document.getElementById('sendBtn');
 
+        // 如果元素不存在（非生成页面），直接返回
+        if (!promptInput) return;
+
         // 监听输入变化
         promptInput.addEventListener('input', function() {
             var hasText = this.value.trim().length > 0;
