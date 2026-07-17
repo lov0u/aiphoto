@@ -175,6 +175,16 @@
             var prompt = input.value.trim();
             if (!prompt && img2imgFiles.length === 0) return;
 
+            // 前端内容预检（第1层防护）
+            var blockedPatterns = ['nude','naked','裸体','裸露','露点','色情','porn','sexual','topless','nsfw','blood','gore','violence','drug','weapon','gun','bomb','毒品','武器','枪','bikini','泳装','比基尼','内衣','underwear','lingerie','性感','sexy','诱惑','seductive'];
+            var promptLower = prompt.toLowerCase();
+            for (var i = 0; i < blockedPatterns.length; i++) {
+                if (promptLower.indexOf(blockedPatterns[i]) !== -1) {
+                    showError('提示词包含不当内容，请修改后重试');
+                    return;
+                }
+            }
+
             setLoading(true);
             hideError();
             if (result) result.classList.remove('has-image');
