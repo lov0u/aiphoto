@@ -11,6 +11,12 @@ $settings = aiphoto_get_settings();
 <script>document.body.classList.add('chat-page');</script>
 
 <style>
+/* 固定页面不滚动，但保留页脚给爬虫 */
+html, body.chat-page {
+    overflow: hidden;
+    height: 100%;
+}
+
 /* 初始隐藏，避免闪烁 */
 .chat-layout {
     visibility: hidden;
@@ -26,7 +32,7 @@ $settings = aiphoto_get_settings();
     margin-top: 80px;
     background: #fff;
     position: relative;
-    overflow: hidden;
+    padding: 0;
 }
 
 /* 左侧边栏（Agnes AI 风格） */
@@ -400,7 +406,7 @@ $settings = aiphoto_get_settings();
 .chat-messages {
     flex: 1;
     overflow-y: auto;
-    padding: 24px 40px 160px;
+    padding: 24px 0;
     scroll-behavior: smooth;
     overscroll-behavior: contain;
 }
@@ -642,22 +648,13 @@ $settings = aiphoto_get_settings();
     color: #6b7280;
 }
 
-/* 输入区域（悬浮在底部） */
+/* 输入区域（Agnes AI 风格 - 居中） */
 .chat-input-area {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 12px 40px 16px;
+    padding: 16px 40px 12px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    z-index: 5;
-}
-
-/* 输入框白色+阴影 */
-.chat-input-container {
-    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    flex-shrink: 0;
 }
 
 .chat-input-container {
@@ -796,43 +793,26 @@ $settings = aiphoto_get_settings();
 }
 
 /* 滚动按钮（输入框正上方偏左） */
-/* 固定滚动按钮（输入框上方，始终可见） */
-.chat-scroll-btn-fixed {
-    width: 30px;
-    height: 30px;
+.chat-scroll-btn {
+    position: absolute;
+    bottom: 180px;
+    right: 50%;
+    margin-right: -16px;
+    width: 32px;
+    height: 32px;
     background: #fff;
     border: 1px solid #d1d5db;
     border-radius: 50%;
     cursor: pointer;
-    display: inline-flex;
+    display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.12);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    z-index: 10;
+    opacity: 0;
     transition: all 200ms ease;
+    pointer-events: none;
 }
-
-.chat-scroll-btn-fixed:hover {
-    border-color: #a78bfa;
-    box-shadow: 0 2px 10px rgba(167,139,250,0.25);
-}
-
-.chat-scroll-btn-fixed svg {
-    width: 14px;
-    height: 14px;
-    color: #374151;
-    stroke-width: 2.5;
-}
-
-/* 默认箭头朝下 */
-.chat-scroll-btn-fixed svg.arrow-up { display: none; }
-.chat-scroll-btn-fixed svg.arrow-down { display: block; }
-
-/* 在底部时箭头朝上 */
-.chat-scroll-btn-fixed.at-bottom svg.arrow-up { display: block; }
-.chat-scroll-btn-fixed.at-bottom svg.arrow-down { display: none; }
-
-/* 旧的滚动按钮隐藏 */
-.chat-scroll-btn { display: none !important; }
 
 .chat-scroll-btn.show {
     opacity: 1;
@@ -1003,21 +983,22 @@ $settings = aiphoto_get_settings();
         <!-- 顶部半透明遮罩 -->
         <div class="chat-scroll-fade" id="scrollFade"></div>
         <div class="chat-messages" id="chatMessages">
-            <!-- 欢迎界面（内容由 getWelcomeHTML 动态生成） -->
+            <!-- 欢迎界面 -->
+            <div class="chat-welcome" id="chatWelcome">
+                <h2 class="chat-welcome-title">
+                    <span class="chat-welcome-gradient">欢迎</span>
+                    我能为您做什么？
+                </h2>
+            </div>
         </div>
 
-        <!-- 滚动按钮（悬浮在输入框上方） -->
-        <div id="scrollBtnWrap" style="display:none;text-align:center;padding:4px 0;">
-            <button class="chat-scroll-btn-fixed" id="scrollBtn">
-                <svg class="arrow-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <line x1="12" y1="19" x2="12" y2="5"/>
-                    <polyline points="5 12 12 5 19 12"/>
-                </svg>
-                <svg class="arrow-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <line x1="12" y1="5" x2="12" y2="19"/>
-                    <polyline points="19 12 12 19 5 12"/>
-                </svg>
-            </button>
+        <!-- 欢迎语下方快捷标签 -->
+        <div class="chat-welcome-tags" id="chatWelcomeTags">
+            <button class="chat-tag" data-prompt="帮我制作一个 AI 幻灯片">AI 幻灯片</button>
+            <button class="chat-tag" data-prompt="帮我创建一个网站">创建网站</button>
+            <button class="chat-tag" data-prompt="帮我做 AI 设计">AI 设计</button>
+            <button class="chat-tag" data-prompt="帮我做 AI 表格">AI 表格</button>
+            <button class="chat-tag chat-tag-more">更多</button>
         </div>
 
         <!-- 输入区域（居中） -->
@@ -1056,6 +1037,20 @@ $settings = aiphoto_get_settings();
             </div>
         </div>
     </main>
+
+    <!-- 滚动按钮（双向：上/下） -->
+    <button class="chat-scroll-btn" id="scrollBtn">
+        <!-- 箭头朝上（滚到顶部） -->
+        <svg class="arrow-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="19" x2="12" y2="5"/>
+            <polyline points="5 12 12 5 19 12"/>
+        </svg>
+        <!-- 箭头朝下（滚到底部） -->
+        <svg class="arrow-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <polyline points="19 12 12 19 5 12"/>
+        </svg>
+    </button>
 
     <!-- 右键菜单 -->
     <div class="chat-context-menu" id="chatContextMenu">
@@ -1099,13 +1094,10 @@ $settings = aiphoto_get_settings();
         isGenerating = on;
         var iconSend = chatSendBtn.querySelector('.icon-send');
         var iconStop = chatSendBtn.querySelector('.icon-stop');
-        var welcomeTags = document.getElementById('chatWelcomeTags');
         if (on) {
             if (iconSend) iconSend.style.display = 'none';
             if (iconStop) iconStop.style.display = 'block';
             chatSendBtn.disabled = false;
-            // 隐藏欢迎标签
-            if (welcomeTags) welcomeTags.style.display = 'none';
         } else {
             if (iconSend) iconSend.style.display = 'block';
             if (iconStop) iconStop.style.display = 'none';
@@ -1122,23 +1114,19 @@ $settings = aiphoto_get_settings();
 
     function init() {
         loadChatList();
-        var welcomeTags = document.getElementById('chatWelcomeTags');
-
         // 检查是否有保存的当前对话
         var lastChatId = localStorage.getItem('aiphoto_current_chat');
         if (lastChatId) {
             var chats = getAllChats();
             if (chats[lastChatId]) {
                 loadChat(lastChatId);
-                // 有对话时隐藏快捷标签
-                if (welcomeTags) welcomeTags.style.display = 'none';
             } else {
                 createNewChat();
             }
         } else {
             // 没有保存的对话，显示欢迎界面
             chatMessages.innerHTML = getWelcomeHTML();
-            if (welcomeTags) welcomeTags.style.display = 'flex';
+            document.getElementById('chatWelcomeTags').style.display = 'flex';
             bindWelcomeEvents();
         }
         bindEvents();
@@ -1195,25 +1183,24 @@ $settings = aiphoto_get_settings();
             });
         });
 
-        // 固定滚动按钮 + 顶部遮罩
+        // 滚动按钮 + 顶部遮罩
         var scrollBtn = document.getElementById('scrollBtn');
-        var scrollBtnWrap = document.getElementById('scrollBtnWrap');
         var scrollFade = document.getElementById('scrollFade');
         if (scrollBtn || scrollFade) {
             chatMessages.addEventListener('scroll', function() {
                 var maxScroll = chatMessages.scrollHeight - chatMessages.clientHeight;
 
                 // 滚动按钮逻辑
-                if (scrollBtn && scrollBtnWrap) {
+                if (scrollBtn) {
                     if (maxScroll > 100) {
-                        scrollBtnWrap.style.display = 'block';
+                        scrollBtn.classList.add('show');
                         if (chatMessages.scrollTop >= maxScroll - 50) {
                             scrollBtn.classList.add('at-bottom');
                         } else {
                             scrollBtn.classList.remove('at-bottom');
                         }
                     } else {
-                        scrollBtnWrap.style.display = 'none';
+                        scrollBtn.classList.remove('show');
                     }
                 }
 
@@ -1614,13 +1601,6 @@ $settings = aiphoto_get_settings();
             '<span class="chat-welcome-gradient">欢迎</span>' +
             ' 我能为您做什么？' +
             '</h2>' +
-            '<div class="chat-welcome-tags" id="chatWelcomeTags">' +
-            '<button class="chat-tag" data-prompt="帮我制作一个 AI 幻灯片">AI 幻灯片</button>' +
-            '<button class="chat-tag" data-prompt="帮我创建一个网站">创建网站</button>' +
-            '<button class="chat-tag" data-prompt="帮我做 AI 设计">AI 设计</button>' +
-            '<button class="chat-tag" data-prompt="帮我做 AI 表格">AI 表格</button>' +
-            '<button class="chat-tag chat-tag-more">更多</button>' +
-            '</div>' +
             '</div>';
     }
 

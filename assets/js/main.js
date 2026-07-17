@@ -1,232 +1,115 @@
 /**
- * AIPhoto - Agnes 风格主 JavaScript
+ * AIPhoto - 主 JavaScript
  */
 
 (function() {
     'use strict';
 
     document.addEventListener('DOMContentLoaded', function() {
-        initGeneratorFlow();
-        initSettingsPanel();
-        initUploadArea();
-        initTextareaAutoResize();
-        initSendButton();
-        initDiscoverTabs();
-        initLocalStorage();
-        initRecCards();
+        initThemeToggle();
+        initMobileMenu();
+        initHeaderScroll();
+        initGeneratorForm();
+        initFilterTabs();
+        initStaggerAnimations();
         initLightbox();
+        initImg2Img();
+        initLoadMore();
+        initGallerySearch();
     });
 
-    // ==================== 核心状态 ====================
-    var state = {
-        hasInput: false,
-        isGenerating: false,
-        selectedRatio: 'auto',
-        selectedResolution: '1K',
-        uploadedImages: [],
-        sidebarVisible: false
-    };
+    // 主题切换
+    function initThemeToggle() {
+        var toggle = document.getElementById('themeToggle');
+        if (!toggle) return;
+        var saved = localStorage.getItem('aiphoto_theme');
+        if (saved) document.documentElement.setAttribute('data-theme', saved);
+        else if (window.matchMedia('(prefers-color-scheme: light)').matches)
+            document.documentElement.setAttribute('data-theme', 'light');
 
-    // ==================== LocalStorage 最近生成 ====================
-    function initLocalStorage() {
-        // 页面加载时渲染 localStorage 中的最近作品
-        renderRecentFromStorage();
-    }
-
-    function getRecentFromStorage() {
-        try {
-            var data = localStorage.getItem('aiphoto_recent');
-            return data ? JSON.parse(data) : [];
-        } catch(e) {
-            return [];
-        }
-    }
-
-    function saveRecentToStorage(item) {
-        var list = getRecentFromStorage();
-        // 去重：相同 prompt 的放前面
-        list = list.filter(function(existing) { return existing.prompt !== item.prompt; });
-        list.unshift(item);
-        // 最多保留 20 条
-        if (list.length > 20) list = list.slice(0, 20);
-        try {
-            localStorage.setItem('aiphoto_recent', JSON.stringify(list));
-        } catch(e) {
-            // localStorage 满了，删掉最老的
-            list = list.slice(0, 15);
-            try { localStorage.setItem('aiphoto_recent', JSON.stringify(list)); } catch(e2) {}
-        }
-    }
-
-    function renderRecentFromStorage() {
-        var list = document.getElementById('recentList');
-        if (!list) return;
-        var items = getRecentFromStorage();
-        list.innerHTML = '';
-        if (items.length === 0) {
-            list.innerHTML = '<div style="padding:20px 8px;text-align:center;color:#bbb;font-size:12px;">暂无记录</div>';
-            return;
-        }
-        items.forEach(function(item) {
-            var div = document.createElement('div');
-            div.className = 'recent-item';
-            div.setAttribute('data-prompt', item.prompt || '');
-            div.setAttribute('data-full', item.fullUrl || '');
-            div.setAttribute('data-thumb', item.thumb || '');
-            div.innerHTML =
-                '<div class="recent-thumb">' +
-                    (item.thumb ? '<img src="' + item.thumb + '" alt="">' : '<div style="width:100%;height:100%;background:#f0f0f0;"></div>') +
-                '</div>' +
-                '<div class="recent-info">' +
-                    '<div class="recent-title">' + (item.title || 'AI 图片') + '</div>' +
-                    '<div class="recent-prompt">' + (item.prompt ? item.prompt.substring(0, 30) : '') + '</div>' +
-                '</div>';
-            list.appendChild(div);
+        toggle.addEventListener('click', function() {
+            var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+            var next = cur === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('aiphoto_theme', next);
         });
     }
 
-    // ==================== 生成器流程 ====================
-    function initGeneratorFlow() {
-        var promptInput = document.getElementById('agnesPrompt');
-        var welcomeEl = document.getElementById('agnesWelcome');
-        var sidebar = document.getElementById('agnesRecentSidebar');
-        var sendBtn = document.getElementById('sendBtn');
+    // 移动端菜单
+    function initMobileMenu() {
+        var toggle = document.querySelector('.menu-toggle');
+        var nav = document.querySelector('.main-navigation');
+        if (!toggle || !nav) return;
 
-        // 如果元素不存在（非生成页面），直接返回
-        if (!promptInput) return;
-
-        // 监听输入变化
-        promptInput.addEventListener('input', function() {
-            var hasText = this.value.trim().length > 0;
-            var hasImages = state.uploadedImages.length > 0;
-
-            if (hasText || hasImages) {
-                if (!state.hasInput) {
-                    welcomeEl.style.opacity = '0';
-                    welcomeEl.style.transform = 'translateY(-10px)';
-                    state.hasInput = true;
-                }
-                if (sidebar && !state.sidebarVisible) {
-                    sidebar.classList.add('visible');
-                    state.sidebarVisible = true;
-                }
-            } else {
-                if (state.hasInput && state.uploadedImages.length === 0) {
-                    welcomeEl.style.opacity = '1';
-                    welcomeEl.style.transform = 'translateY(0)';
-                    state.hasInput = false;
-                }
-                if (sidebar && state.sidebarVisible) {
-                    sidebar.classList.remove('visible');
-                    state.sidebarVisible = false;
-                }
-            }
-
-            updateSendButton();
+        toggle.addEventListener('click', function() {
+            var open = nav.classList.toggle('is-open');
+            toggle.classList.toggle('active');
+            toggle.setAttribute('aria-expanded', open);
         });
 
-        // 新作品
-        var newWorkBtn = document.getElementById('newWorkBtn');
-        if (newWorkBtn) {
-            newWorkBtn.addEventListener('click', function() {
-                promptInput.value = '';
-                state.uploadedImages = [];
-                renderUploadPreviews();
-                promptInput.dispatchEvent(new Event('input'));
-                promptInput.focus();
+        nav.querySelectorAll('a').forEach(function(link) {
+            link.addEventListener('click', function() {
+                nav.classList.remove('is-open');
+                toggle.classList.remove('active');
+                toggle.setAttribute('aria-expanded', 'false');
             });
-        }
-    }
-
-    // ==================== 侧边栏 ====================
-    var sidebar = document.getElementById('agnesRecentSidebar');
-    var collapseBtn = document.getElementById('sidebarCollapse');
-    if (collapseBtn) {
-        collapseBtn.addEventListener('click', function() {
-            sidebar.classList.remove('visible');
-            state.sidebarVisible = false;
         });
-    }
-
-    // 点击侧边栏作品
-    document.addEventListener('click', function(e) {
-        var item = e.target.closest('.recent-item');
-        if (item) {
-            var prompt = item.getAttribute('data-prompt');
-            if (prompt) {
-                var input = document.getElementById('agnesPrompt');
-                if (input) {
-                    input.value = prompt;
-                    input.dispatchEvent(new Event('input'));
-                }
-            }
-        }
-    });
-
-    // ==================== 设置面板 ====================
-    function initSettingsPanel() {
-        var settingsBtn = document.getElementById('settingsBtn');
-        var overlay = document.getElementById('settingsOverlay');
-        var closeBtn = document.getElementById('settingsClose');
-        var ratioGrid = document.getElementById('ratioGrid');
-        var resGroup = document.getElementById('resolutionGroup');
-
-        if (settingsBtn) {
-            settingsBtn.addEventListener('click', function() {
-                overlay.style.display = 'flex';
-                requestAnimationFrame(function() {
-                    overlay.classList.add('open');
-                });
-            });
-        }
-
-        function closeSettings() {
-            overlay.classList.remove('open');
-            setTimeout(function() {
-                overlay.style.display = 'none';
-            }, 250);
-        }
-
-        if (closeBtn) closeBtn.addEventListener('click', closeSettings);
-        if (overlay) {
-            overlay.addEventListener('click', function(e) {
-                if (e.target === overlay) closeSettings();
-            });
-        }
 
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && overlay.classList.contains('open')) {
-                closeSettings();
+            if (e.key === 'Escape' && nav.classList.contains('is-open')) {
+                nav.classList.remove('is-open');
+                toggle.classList.remove('active');
+                toggle.setAttribute('aria-expanded', 'false');
+                toggle.focus();
             }
         });
-
-        if (ratioGrid) {
-            ratioGrid.addEventListener('click', function(e) {
-                var btn = e.target.closest('.ratio-btn');
-                if (!btn) return;
-                ratioGrid.querySelectorAll('.ratio-btn').forEach(function(b) { b.classList.remove('active'); });
-                btn.classList.add('active');
-                state.selectedRatio = btn.getAttribute('data-ratio');
-            });
-        }
-
-        if (resGroup) {
-            resGroup.addEventListener('click', function(e) {
-                var btn = e.target.closest('.res-btn');
-                if (!btn) return;
-                resGroup.querySelectorAll('.res-btn').forEach(function(b) { b.classList.remove('active'); });
-                btn.classList.add('active');
-                state.selectedResolution = btn.getAttribute('data-res');
-            });
-        }
     }
 
-    // ==================== 上传区域 ====================
-    function initUploadArea() {
-        var uploadBtn = document.getElementById('uploadPlusBtn');
-        var fileInput = document.getElementById('fileInput');
+    // 头部滚动
+    function initHeaderScroll() {
+        var header = document.querySelector('.site-header');
+        if (!header) return;
+        var ticking = false;
+        window.addEventListener('scroll', function() {
+            if (!ticking) {
+                window.requestAnimationFrame(function() {
+                    header.classList.toggle('scrolled', window.scrollY > 50);
+                    ticking = false;
+                });
+                ticking = true;
+            }
+        });
+    }
 
-        if (!uploadBtn || !fileInput) return;
+    // ==================== 图生图 ====================
+    var img2imgFiles = [];
+
+    function initImg2Img() {
+        var toggleBtn = document.getElementById('img2imgToggle');
+        var txt2imgBtn = document.getElementById('txt2imgBtn');
+        var area = document.getElementById('img2imgArea');
+        var fileInput = document.getElementById('img2imgInput');
+        var uploadBtn = document.getElementById('img2imgUploadBtn');
+
+        if (!toggleBtn || !area) return;
+
+        // 文生图按钮
+        if (txt2imgBtn) {
+            txt2imgBtn.addEventListener('click', function() {
+                area.style.display = 'none';
+                txt2imgBtn.classList.add('gen-mode-btn--active');
+                toggleBtn.classList.remove('gen-mode-btn--active');
+            });
+        }
+
+        // 图生图按钮
+        toggleBtn.addEventListener('click', function() {
+            var hidden = area.style.display === 'none';
+            area.style.display = hidden ? 'block' : 'none';
+            toggleBtn.classList.add('gen-mode-btn--active');
+            if (txt2imgBtn) txt2imgBtn.classList.remove('gen-mode-btn--active');
+            if (hidden) fileInput.click();
+        });
 
         uploadBtn.addEventListener('click', function() {
             fileInput.click();
@@ -235,15 +118,11 @@
         fileInput.addEventListener('change', function() {
             var files = Array.from(this.files);
             files.forEach(function(file) {
-                if (state.uploadedImages.length >= 4) return;
+                if (img2imgFiles.length >= 4) return;
                 var reader = new FileReader();
                 reader.onload = function(e) {
-                    state.uploadedImages.push(e.target.result);
-                    renderUploadPreviews();
-                    var promptInput = document.getElementById('agnesPrompt');
-                    if (promptInput && !state.hasInput) {
-                        promptInput.dispatchEvent(new Event('input'));
-                    }
+                    img2imgFiles.push(e.target.result);
+                    renderImg2ImgPreview();
                 };
                 reader.readAsDataURL(file);
             });
@@ -251,293 +130,589 @@
         });
     }
 
-    function renderUploadPreviews() {
-        var container = document.getElementById('uploadPreviews');
+    function renderImg2ImgPreview() {
+        var container = document.getElementById('img2imgPreview');
         if (!container) return;
         container.innerHTML = '';
-        state.uploadedImages.forEach(function(src, idx) {
+        img2imgFiles.forEach(function(src, idx) {
             var div = document.createElement('div');
-            div.className = 'upload-preview-item';
-            div.innerHTML = '<img src="' + src + '" alt="参考图"><button type="button" class="upload-preview-remove" data-idx="' + idx + '">✕</button>';
+            div.style.position = 'relative';
+            div.innerHTML = '<img src="' + src + '" class="preview-thumb" alt=""><span class="remove-btn" data-idx="' + idx + '">✕</span>';
             container.appendChild(div);
         });
-        container.querySelectorAll('.upload-preview-remove').forEach(function(btn) {
+
+        container.querySelectorAll('.remove-btn').forEach(function(btn) {
             btn.addEventListener('click', function(e) {
                 e.stopPropagation();
-                state.uploadedImages.splice(parseInt(this.getAttribute('data-idx')), 1);
-                renderUploadPreviews();
-                var promptInput = document.getElementById('agnesPrompt');
-                if (promptInput) promptInput.dispatchEvent(new Event('input'));
+                img2imgFiles.splice(parseInt(this.dataset.idx), 1);
+                renderImg2ImgPreview();
             });
         });
     }
 
-    // ==================== 文本框自适应高度 ====================
-    function initTextareaAutoResize() {
-        var textarea = document.getElementById('agnesPrompt');
-        if (!textarea) return;
+    // ==================== 图片生成 ====================
+    function initGeneratorForm() {
+        var form = document.getElementById('generatorForm');
+        var input = document.getElementById('generatorPrompt');
+        var result = document.getElementById('generatorResult');
+        var resultImage = document.getElementById('resultImage');
+        var errorMessage = document.getElementById('errorMessage');
+        var sizeSelect = document.getElementById('generatorSize');
+        var ratioSelect = document.getElementById('generatorRatio');
 
-        textarea.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 180) + 'px';
-        });
+        if (!form || !input) return;
 
-        textarea.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                var sendBtn = document.getElementById('sendBtn');
-                if (sendBtn.classList.contains('active')) {
-                    sendBtn.click();
+        // 预设模板点击（来自 GPT Image 2 Skill）
+        // 只记录模板选择，不填充输入框，后台静默生效
+        var currentTemplate = ''; // 当前选中的模板key
+        var templateTags = document.getElementById('templateTags');
+        if (templateTags) {
+            templateTags.addEventListener('click', function(e) {
+                var tag = e.target.closest('.gen-template-tag');
+                if (!tag) return;
+                var key = tag.getAttribute('data-template');
+                // 高亮/取消选中
+                var allTags = templateTags.querySelectorAll('.gen-template-tag');
+                if (currentTemplate === key) {
+                    // 再次点击取消选中
+                    currentTemplate = '';
+                    tag.style.background = '#f0f0f0';
+                    tag.style.color = '';
+                } else {
+                    allTags.forEach(function(t) { t.style.background = '#f0f0f0'; t.style.color = ''; });
+                    tag.style.background = '#6c5ce7';
+                    tag.style.color = '#fff';
+                    currentTemplate = key;
+                }
+            });
+        }
+
+        // 开始按钮点击
+        var genStartBtn = document.getElementById('genStartBtn');
+        if (genStartBtn) {
+            genStartBtn.addEventListener('click', function() {
+                console.log('DEBUG: genStartBtn clicked, isGenerating=' + isGenerating);
+                if (isGenerating) {
+                    // 停止生成
+                    stopGeneration();
+                    return;
+                }
+                var prompt = input.value.trim();
+                if (!prompt && img2imgFiles.length === 0) return;
+
+                // 前端内容预检
+                var blockedPatterns = ['nude','naked','裸体','裸露','露点','色情','porn','sexual','topless','nsfw','blood','gore','violence','drug','weapon','gun','bomb','毒品','武器','枪','bikini','泳装','比基尼','内衣','underwear','lingerie','性感','sexy','诱惑','seductive'];
+                var promptLower = prompt.toLowerCase();
+                for (var i = 0; i < blockedPatterns.length; i++) {
+                    if (promptLower.indexOf(blockedPatterns[i]) !== -1) {
+                        showError('提示词包含不当内容，请修改后重试');
+                        return;
+                    }
+                }
+
+                setLoading(true);
+                hideError();
+                if (result) result.classList.remove('has-image');
+
+                var genState = {
+                    prompt: prompt,
+                    userPrompt: prompt,
+                    size: sizeSelect ? sizeSelect.value : '',
+                    ratio: ratioSelect ? ratioSelect.value : '',
+                    effect: document.getElementById('generatorEffect') ? document.getElementById('generatorEffect').value : '',
+                    lens: document.getElementById('generatorLens') ? document.getElementById('generatorLens').value : '',
+                    time: Date.now()
+                };
+                localStorage.setItem('aiphoto_pending_gen', JSON.stringify(genState));
+                doGenerate(genState);
+            });
+        }
+
+        // 禁用表单默认提交
+        form.addEventListener('submit', function(e) { e.preventDefault(); });
+
+        var genPollTimer = null;
+        var genAbortController = null;
+
+        function doGenerate(state) {
+            console.log('DEBUG: doGenerate called with state:', JSON.stringify(state));
+            genAbortController = new AbortController();
+            var progressBox = document.getElementById('genProgressBox');
+
+            // 清空并显示进度框
+            function showProgress() {
+                if (progressBox) {
+                    progressBox.style.display = 'block';
+                    progressBox.innerHTML = '';
                 }
             }
-        });
-    }
 
-    // ==================== 发送按钮 ====================
-    function initSendButton() {
-        var sendBtn = document.getElementById('sendBtn');
-        if (!sendBtn) return;
-        sendBtn.addEventListener('click', function() {
-            if (state.isGenerating) return;
-            generateImage();
-        });
-    }
+            // 追加一条进度消息
+            function addProgress(text) {
+                if (progressBox) {
+                    var line = document.createElement('div');
+                    line.textContent = '> ' + text;
+                    progressBox.appendChild(line);
+                    progressBox.scrollTop = progressBox.scrollHeight;
+                }
+            }
 
-    function updateSendButton() {
-        var sendBtn = document.getElementById('sendBtn');
-        var promptInput = document.getElementById('agnesPrompt');
-        if (!sendBtn || !promptInput) return;
-        var hasContent = promptInput.value.trim().length > 0 || state.uploadedImages.length > 0;
-        sendBtn.classList.toggle('active', hasContent && !state.isGenerating);
-    }
+            showProgress();
+            addProgress('开始生成...');
+            addProgress('AI 正在分析提示词...');
 
-    // ==================== 图片生成 ====================
-    function generateImage() {
-        var promptInput = document.getElementById('agnesPrompt');
-        var prompt = promptInput.value.trim();
+            // 第一步：AI 增强提示词
+            var aiParams = new URLSearchParams({
+                action: 'aiphoto_ai_enhance',
+                nonce: aiphotoAjax.nonce,
+                prompt: state.prompt || '',
+                effect: state.effect || '',
+                lens: state.lens || '',
+                template: currentTemplate || ''
+            });
 
-        if (!prompt && state.uploadedImages.length === 0) return;
+            fetch(aiphotoAjax.url + '?' + aiParams.toString())
+                .then(function(r) { return r.json(); })
+                .then(function(aiData) {
+                    var finalPrompt = state.prompt;
+                    if (aiData.success && aiData.data && aiData.data.enhanced) {
+                        finalPrompt = aiData.data.enhanced;
+                        // 过滤 Midjourney 风格参数
+                        finalPrompt = finalPrompt.replace(/\s*--\w+\s+\S+/g, '').trim();
+                        addProgress('AI 分析完成');
+                    } else {
+                        addProgress('AI 增强跳过，使用原始提示词');
+                    }
+                    addProgress('正在生成图片...');
 
-        state.isGenerating = true;
-        updateSendButton();
-        showLoading(true);
+                    // 第二步：生成图片
+                    var formData = new FormData();
+                    formData.append('action', 'aiphoto_generate');
+                    formData.append('nonce', aiphotoAjax.nonce);
+                    formData.append('prompt', finalPrompt);
+                    formData.append('user_prompt', state.userPrompt || state.prompt || '');
+                    formData.append('size', state.size || '');
+                    formData.append('ratio', state.ratio || '');
+                    formData.append('effect', state.effect || '');
+                    formData.append('lens', state.lens || '');
+                    formData.append('template', currentTemplate || '');
 
-        var sizeMap = { '1K': '1024x1024', '2K': '2048x2048', '4K': '4096x4096' };
-        var ratio = state.selectedRatio;
-        if (ratio === 'auto') ratio = '1:1';
-        var size = sizeMap[state.selectedResolution] || '1024x1024';
+                    return fetch(aiphotoAjax.url, { method: 'POST', body: formData, signal: genAbortController.signal });
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    localStorage.removeItem('aiphoto_pending_gen');
+                    if (data.success) {
+                        addProgress('生成完成');
+                        showSuccess(data.data);
+                    } else {
+                        addProgress('错误: ' + (data.data.message || '生成失败'));
+                        showError(data.data.message || aiphotoAjax.i18n.error);
+                    }
+                })
+                .catch(function(err) {
+                    if (err.name === 'AbortError') {
+                        localStorage.removeItem('aiphoto_pending_gen');
+                        setLoading(false);
+                        return;
+                    }
+                    console.error('AIPhoto错误:', err);
+                    addProgress('错误: ' + (err.message || '网络错误'));
+                    showError(aiphotoAjax.i18n.error);
+                })
+                .finally(function() { setLoading(false); });
+        }
 
-        // 前端内容预检
-        var blockedPatterns = ['nude','naked','裸体','裸露','露点','色情','porn','sexual','topless','nsfw','blood','gore','violence','drug','weapon','gun','bomb','毒品','武器','枪','bikini','泳装','比基尼','内衣','underwear','lingerie','性感','sexy','诱惑','seductive'];
-        var promptLower = prompt.toLowerCase();
-        for (var i = 0; i < blockedPatterns.length; i++) {
-            if (promptLower.indexOf(blockedPatterns[i]) !== -1) {
-                showError('提示词包含不当内容，请修改后重试');
-                state.isGenerating = false;
-                updateSendButton();
+        // 轮询检查图片是否已生成
+        function startPolling(state) {
+            if (genPollTimer) clearInterval(genPollTimer);
+            var attempts = 0;
+            var maxAttempts = 15; // 最多轮询 30 秒（每 2 秒一次）
+
+            genPollTimer = setInterval(function() {
+                attempts++;
+                if (attempts > maxAttempts) {
+                    clearInterval(genPollTimer);
+                    setLoading(false);
+                    localStorage.removeItem('aiphoto_pending_gen');
+                    return;
+                }
+
+                var fd = new FormData();
+                fd.append('action', 'aiphoto_check_generation');
+                fd.append('nonce', aiphotoAjax.nonce);
+                fd.append('prompt', state.prompt);
+                fd.append('since', state.time);
+
+                fetch(aiphotoAjax.url, { method: 'POST', body: fd })
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        if (data.success && data.data.found) {
+                            clearInterval(genPollTimer);
+                            localStorage.removeItem('aiphoto_pending_gen');
+                            setLoading(false);
+                            // 映射字段名匹配 showSuccess
+                            showSuccess({
+                                gallery_url: data.data.url,
+                                url: data.data.original || data.data.url,
+                                prompt: data.data.prompt
+                            });
+                        }
+                    })
+                    .catch(function() {});
+            }, 2000);
+        }
+
+        // 页面加载时恢复未完成的生成状态
+        (function restorePendingGen() {
+            var pending = localStorage.getItem('aiphoto_pending_gen');
+            if (!pending) return;
+            try { pending = JSON.parse(pending); } catch (e) { localStorage.removeItem('aiphoto_pending_gen'); return; }
+
+            // 超过 2 分钟直接清理
+            if (Date.now() - pending.time > 120000) {
+                localStorage.removeItem('aiphoto_pending_gen');
                 return;
+            }
+
+            // 恢复表单状态
+            if (pending.prompt) input.value = pending.prompt;
+            if (pending.size && sizeSelect) sizeSelect.value = pending.size;
+            if (pending.ratio && ratioSelect) ratioSelect.value = pending.ratio;
+            if (pending.effect) {
+                var effEl = document.getElementById('generatorEffect');
+                if (effEl) effEl.value = pending.effect;
+            }
+            if (pending.lens) {
+                var lensEl = document.getElementById('generatorLens');
+                if (lensEl) lensEl.value = pending.lens;
+            }
+
+            // 显示正在生成状态
+            setLoading(true);
+            hideError();
+            if (result) result.classList.remove('has-image');
+
+            // 开始轮询等待结果
+            startPolling(pending);
+        })();
+
+        var isGenerating = false;
+
+        function setLoading(on) {
+            isGenerating = on;
+            var startBtn = document.getElementById('genStartBtn');
+            var progressBox = document.getElementById('genProgressBox');
+            var welcomeMsg = document.getElementById('genWelcomeMsg');
+
+            if (on) {
+                // 生成中：按钮变"停止"，清空进度框
+                if (startBtn) { startBtn.textContent = '停止'; startBtn.style.background = '#ef4444'; }
+                if (progressBox) { progressBox.innerHTML = ''; progressBox.scrollTop = 0; }
+            } else {
+                // 空闲：按钮变"开始"，显示欢迎语
+                if (startBtn) startBtn.textContent = '开始';
+                if (progressBox) {
+                    progressBox.style.display = 'flex';
+                    progressBox.style.alignItems = 'center';
+                    progressBox.style.justifyContent = 'center';
+                    progressBox.innerHTML = '<div id="genWelcomeMsg" style="font-size:14px;font-weight:600;color:#8b5cf6;">输入描述，点击开始生成图片</div>';
+                }
             }
         }
 
-        // 步骤1：AI 增强提示词
-        var aiParams = new URLSearchParams({
-            action: 'aiphoto_ai_enhance',
-            nonce: aiphotoAjax.nonce,
-            prompt: prompt || '',
-            template: ''
-        });
+        function stopGeneration() {
+            if (genAbortController) genAbortController.abort();
+            if (genPollTimer) clearInterval(genPollTimer);
+            localStorage.removeItem('aiphoto_pending_gen');
+            setLoading(false);
+            hideError();
+        }
 
-        fetch(aiphotoAjax.url + '?' + aiParams.toString())
-            .then(function(r) { return r.json(); })
-            .then(function(aiData) {
-                var finalPrompt = prompt;
-                if (aiData.success && aiData.data && aiData.data.enhanced) {
-                    finalPrompt = aiData.data.enhanced;
-                    finalPrompt = finalPrompt.replace(/\s*--\w+\s+\S+/g, '').trim();
+        function showSuccess(data) {
+            setLoading(false);
+            if (result && resultImage) {
+                // 预览用压缩版（加载快），下载用原图
+                resultImage.src = data.gallery_url || data.url;
+                resultImage.alt = data.prompt || 'AI生成图片';
+                result.classList.add('has-image');
+
+                var dl = document.getElementById('downloadBtn');
+                if (dl) dl.onclick = function() { window.open(data.url, '_blank'); };
+
+                var cp = document.getElementById('copyPromptBtn');
+                if (cp && data.prompt) {
+                    cp.onclick = function() {
+                        navigator.clipboard.writeText(data.prompt).then(function() {
+                            var orig = cp.querySelector('span').textContent;
+                            cp.querySelector('span').textContent = '已复制！';
+                            setTimeout(function() { cp.querySelector('span').textContent = orig; }, 2000);
+                        });
+                    };
                 }
 
-                // 步骤2：生成图片
-                var formData = new FormData();
-                formData.append('action', 'aiphoto_generate');
-                formData.append('nonce', aiphotoAjax.nonce);
-                formData.append('prompt', finalPrompt);
-                formData.append('user_prompt', prompt);
-                formData.append('size', size);
-                formData.append('ratio', ratio);
+                // 显示保存状态
+                if (data.save_status === 'failed') {
+                    console.error('AIPhoto 保存失败:', data.save_error);
+                    // 显示警告提示
+                    var warningDiv = document.createElement('div');
+                    warningDiv.className = 'save-warning';
+                    warningDiv.style.cssText = 'background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px 16px;margin-top:12px;font-size:14px;color:#856404;';
+                    warningDiv.innerHTML = '<strong>⚠️ 图片已生成但保存到网站失败：</strong><br>' + data.save_error + '<br><small>图片仍可通过下载按钮保存。</small>';
+                    result.appendChild(warningDiv);
+                }
 
-                return fetch(aiphotoAjax.url, { method: 'POST', body: formData });
+                result.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        function showError(msg) {
+            setLoading(false);
+            if (errorMessage) {
+                errorMessage.textContent = msg;
+                errorMessage.style.display = 'block';
+            }
+        }
+
+        function hideError() {
+            if (errorMessage) errorMessage.style.display = 'none';
+        }
+    }
+
+    // 筛选
+    function initFilterTabs() {
+        var tabs = document.querySelectorAll('#filterTabs .filter-tab');
+        var items = document.querySelectorAll('.masonry-item');
+        if (tabs.length === 0 || items.length === 0) return;
+
+        tabs.forEach(function(tab) {
+            tab.addEventListener('click', function() {
+                var filter = this.getAttribute('data-filter');
+                tabs.forEach(function(t) { t.classList.remove('active'); });
+                this.classList.add('active');
+                items.forEach(function(item) {
+                    var cat = item.getAttribute('data-category');
+                    if (filter === 'all' || cat === filter) {
+                        item.style.display = '';
+                        item.classList.add('animate-fade-in');
+                    } else {
+                        item.style.display = 'none';
+                        item.classList.remove('animate-fade-in');
+                    }
+                });
+            });
+        });
+    }
+
+    // 交错动画
+    function initStaggerAnimations() {
+        var els = document.querySelectorAll('.stagger-children');
+        if ('IntersectionObserver' in window) {
+            var obs = new IntersectionObserver(function(entries) {
+                entries.forEach(function(entry) {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-animated');
+                        obs.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+            els.forEach(function(el) { obs.observe(el); });
+        } else {
+            els.forEach(function(el) { el.classList.add('is-animated'); });
+        }
+    }
+
+    // 灯箱
+    var lightboxCreated = false;
+    var lightboxEl, lightboxImg, lightboxTitle, lightboxClose;
+
+    function initLightbox() {
+        if (lightboxCreated) return; // 避免重复创建
+
+        lightboxEl = document.createElement('div');
+        lightboxEl.className = 'lightbox';
+        lightboxEl.setAttribute('role', 'dialog');
+        lightboxEl.setAttribute('aria-modal', 'true');
+        lightboxEl.innerHTML = '<button class="lightbox-close" aria-label="关闭">&times;</button><img class="lightbox-img" src="" alt=""><div class="lightbox-caption"><p class="lightbox-title"></p><span class="lightbox-expand-btn" style="display:none;">展开全部</span></div>';
+        document.body.appendChild(lightboxEl);
+
+        lightboxImg = lightboxEl.querySelector('.lightbox-img');
+        lightboxTitle = lightboxEl.querySelector('.lightbox-title');
+        lightboxClose = lightboxEl.querySelector('.lightbox-close');
+        var lightboxExpand = lightboxEl.querySelector('.lightbox-expand-btn');
+
+        // 展开/收起
+        lightboxTitle.addEventListener('click', function() {
+            this.classList.toggle('expanded');
+            lightboxExpand.textContent = this.classList.contains('expanded') ? '收起' : '展开全部';
+        });
+        lightboxExpand.addEventListener('click', function() {
+            lightboxTitle.classList.toggle('expanded');
+            this.textContent = lightboxTitle.classList.contains('expanded') ? '收起' : '展开全部';
+        });
+
+        // 使用事件委托处理所有图片点击
+        document.addEventListener('click', function(e) {
+            // 点击 masonry-item 或其子元素
+            var item = e.target.closest('.masonry-item');
+            if (item) {
+                var fullUrl = item.getAttribute('data-full');
+                var origPrompt = item.getAttribute('data-original-prompt');
+                if (!fullUrl) return;
+                e.preventDefault();
+                openLightbox(fullUrl, origPrompt);
+                return;
+            }
+
+            // 最近生成图片点击
+            var recentItem = e.target.closest('.gen-recent-item');
+            if (recentItem) {
+                var fullUrl = recentItem.getAttribute('data-full');
+                var origPrompt = recentItem.getAttribute('data-original-prompt');
+                if (!fullUrl) return;
+                e.preventDefault();
+                openLightbox(fullUrl, origPrompt);
+                return;
+            }
+        });
+
+        // 关闭灯箱
+        function closeLB() { lightboxEl.classList.remove('is-open'); document.body.style.overflow = ''; }
+        lightboxClose.addEventListener('click', closeLB);
+        lightboxEl.addEventListener('click', function(e) { if (e.target === lightboxEl) closeLB(); });
+        document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && lightboxEl.classList.contains('is-open')) closeLB(); });
+
+        lightboxCreated = true;
+    }
+
+    function openLightbox(src, prompt) {
+        lightboxImg.src = src;
+        lightboxImg.alt = prompt || '';
+        // 过滤：只保留中文字符、数字、中文标点
+        var cleanPrompt = (prompt || '').replace(/[a-zA-Z][a-zA-Z\s,.'\-]*/g, '').replace(/,\s*,/g, ',').replace(/^[\s,]+|[\s,]+$/g, '').trim();
+        if (cleanPrompt) {
+            lightboxTitle.textContent = '提示词：' + cleanPrompt;
+        } else {
+            lightboxTitle.textContent = prompt ? '提示词：' + prompt : '';
+        }
+        // 重置展开状态
+        lightboxTitle.classList.remove('expanded');
+        var lightboxExpand = lightboxEl.querySelector('.lightbox-expand-btn');
+        // 超过 2 行（约 60 个字符）显示展开按钮
+        if (lightboxTitle.textContent.length > 60) {
+            lightboxExpand.style.display = 'inline-block';
+        } else {
+            lightboxExpand.style.display = 'none';
+        }
+        lightboxEl.classList.add('is-open');
+        document.body.style.overflow = 'hidden';
+        lightboxClose.focus();
+    }
+
+    // 加载更多画廊图片
+    function initLoadMore() {
+        var btn = document.getElementById('loadMoreBtn');
+        var grid = document.getElementById('masonryGrid');
+        if ( !btn || !grid ) return;
+
+        var offset = 12; // 初始已显示数量，与 PHP 查询一致
+        var loading = false;
+
+        btn.addEventListener('click', function() {
+            if ( loading ) return;
+            loading = true;
+            btn.classList.add('loading');
+            btn.innerHTML = '<span class="spinner"></span> 加载中...';
+
+            var formData = new FormData();
+            formData.append('action', 'aiphoto_load_more');
+            formData.append('nonce', aiphotoAjax.nonce);
+            formData.append('offset', offset);
+
+            fetch(aiphotoAjax.url, { method: 'POST', body: formData })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if ( data.success && data.data.html ) {
+                        grid.insertAdjacentHTML('beforeend', data.data.html);
+                        offset += 12;
+                    } else {
+                        btn.innerHTML = '已加载全部';
+                        btn.style.opacity = '0.5';
+                        btn.style.cursor = 'default';
+                    }
+                })
+                .catch(function() {
+                    btn.innerHTML = '加载失败，点击重试';
+                })
+                .finally(function() {
+                    loading = false;
+                    btn.classList.remove('loading');
+                    if ( offset <= 24 ) {
+                        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> 查看更多';
+                    }
+                });
+        });
+    }
+
+    // ==================== 画廊搜索 ====================
+    function initGallerySearch() {
+        var form = document.getElementById('gallerySearchForm');
+        var input = document.getElementById('gallerySearchInput');
+        var resultText = document.getElementById('gallerySearchResult');
+        var grid = document.getElementById('masonryGrid');
+        var loadMoreBtn = document.getElementById('loadMoreBtn');
+
+        if (!form || !grid) return;
+
+        // 原始内容保存
+        var originalHTML = grid.innerHTML;
+        var originalLoadMoreDisplay = loadMoreBtn ? loadMoreBtn.style.display : '';
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            var keyword = input.value.trim();
+
+            if (!keyword) {
+                // 清空搜索，恢复原始内容
+                grid.innerHTML = originalHTML;
+                if (loadMoreBtn) loadMoreBtn.style.display = originalLoadMoreDisplay;
+                resultText.textContent = '';
+                return;
+            }
+
+            // 显示加载中
+            grid.innerHTML = '<div class="gallery-loading"><div class="spinner"></div><p>搜索中...</p></div>';
+            if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+            resultText.textContent = '';
+
+            fetch(aiphotoAjax.url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'action=aiphoto_search&nonce=' + encodeURIComponent(aiphotoAjax.nonce) + '&keyword=' + encodeURIComponent(keyword)
             })
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 if (data.success) {
-                    // 保存到 localStorage
-                    saveRecentToStorage({
-                        prompt: prompt,
-                        title: prompt ? prompt.substring(0, 20) : 'AI 图片',
-                        fullUrl: data.url,
-                        thumb: data.gallery_url,
-                        time: Date.now()
-                    });
-                    renderRecentFromStorage();
-                    showResult(data.data);
+                    grid.innerHTML = data.data.html;
+                    resultText.textContent = '找到 ' + data.data.count + ' 张相关图片';
+                    // 重新绑定灯箱
+                    initLightbox();
                 } else {
-                    showError(data.data.message || '生成失败，请重试');
+                    grid.innerHTML = '<div class="gallery-empty"><p>' + (data.data.message || '没有找到相关图片') + '</p></div>';
+                    resultText.textContent = '';
                 }
             })
-            .catch(function(err) {
-                console.error('AIPhoto错误:', err);
-                showError('网络错误，请重试');
-            })
-            .finally(function() {
-                state.isGenerating = false;
-                updateSendButton();
-                showLoading(false);
-            });
-    }
-
-    function showLoading(show) {
-        var existing = document.querySelector('.agnes-loading');
-        if (show) {
-            if (existing) { existing.classList.add('visible'); return; }
-            var loader = document.createElement('div');
-            loader.className = 'agnes-loading visible';
-            loader.innerHTML = '<div class="loading-spinner"></div><div class="loading-text">AI 正在生成图片...</div>';
-            document.getElementById('agnesContent').appendChild(loader);
-        } else {
-            if (existing) existing.remove();
-        }
-    }
-
-    function showResult(data) {
-        var section = document.getElementById('resultSection');
-        if (!section) return;
-
-        var saveStatus = data.save_status || 'success';
-        var warningHtml = '';
-        if (saveStatus === 'failed') {
-            warningHtml = '<div class="result-error" style="margin-top:12px;background:#fffbeb;border-color:#fde68a;color:#92400e;">⚠️ 图片已生成但保存到网站失败：<br>' + (data.save_error || '未知错误') + '</div>';
-        }
-
-        section.style.display = 'block';
-        section.innerHTML =
-            '<div class="result-header">' +
-                '<h3>生成结果</h3>' +
-                '<div class="result-actions">' +
-                    '<button class="result-action-btn" id="downloadBtn">' +
-                        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>' +
-                        '下载原图' +
-                    '</button>' +
-                    '<button class="result-action-btn" id="copyPromptBtn">' +
-                        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>' +
-                        '复制提示词' +
-                    '</button>' +
-                '</div>' +
-            '</div>' +
-            '<div class="result-image-container">' +
-                '<img id="resultImage" src="' + (data.gallery_url || data.url) + '" alt="AI生成图片">' +
-            '</div>' +
-            warningHtml;
-
-        var dlBtn = document.getElementById('downloadBtn');
-        if (dlBtn) dlBtn.addEventListener('click', function() { window.open(data.url, '_blank'); });
-
-        var cpBtn = document.getElementById('copyPromptBtn');
-        if (cpBtn && data.prompt) {
-            cpBtn.addEventListener('click', function() {
-                navigator.clipboard.writeText(data.prompt).then(function() {
-                    var orig = cpBtn.textContent.trim();
-                    cpBtn.textContent = '✓ 已复制';
-                    setTimeout(function() { cpBtn.textContent = orig; }, 2000);
-                });
-            });
-        }
-
-        section.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-
-    function showError(msg) {
-        var section = document.getElementById('resultSection');
-        if (!section) return;
-        section.style.display = 'block';
-        section.innerHTML = '<div class="result-error">' + msg + '</div>';
-        setTimeout(function() {
-            section.style.display = 'none';
-            section.innerHTML = '';
-        }, 5000);
-    }
-
-    // ==================== 发现 Tabs ====================
-    function initDiscoverTabs() {
-        var tabs = document.querySelectorAll('.discover-tab');
-        if (tabs.length === 0) return;
-        tabs.forEach(function(tab) {
-            tab.addEventListener('click', function() {
-                tabs.forEach(function(t) { t.classList.remove('active'); });
-                this.classList.add('active');
+            .catch(function() {
+                grid.innerHTML = '<div class="gallery-empty"><p>搜索失败，请重试</p></div>';
+                resultText.textContent = '';
             });
         });
-    }
 
-    // ==================== 底部推荐卡片 ====================
-    function initRecCards() {
-        var scroll = document.getElementById('recScroll');
-        if (!scroll) return;
-
-        // 尝试从 featured 目录加载真实图片
-        var featuredImages = [
-            { label: '风景', gradient: 'linear-gradient(135deg,#ffecd2,#fcb69f)', color: '#c48' },
-            { label: '人像', gradient: 'linear-gradient(135deg,#a18cd1,#fbc2eb)', color: '#c48' },
-            { label: '插画', gradient: 'linear-gradient(135deg,#84fab0,#8fd3f4)', color: '#c48' },
-            { label: '建筑', gradient: 'linear-gradient(135deg,#fbc2eb,#a6c1ee)', color: '#c48' },
-            { label: '抽象', gradient: 'linear-gradient(135deg,#ffecd2,#c2e9fb)', color: '#c48' },
-            { label: '动物', gradient: 'linear-gradient(135deg,#d4fc79,#96e6a1)', color: '#c48' },
-            { label: '食物', gradient: 'linear-gradient(135deg,#f6d365,#fda085)', color: '#c48' },
-            { label: '科技', gradient: 'linear-gradient(135deg,#667eea,#764ba2)', color: '#fff' },
-        ];
-
-        featuredImages.forEach(function(item) {
-            var card = document.createElement('div');
-            card.className = 'rec-card';
-            card.innerHTML = '<div style="width:100%;height:100%;background:' + item.gradient + ';display:flex;align-items:center;justify-content:center;color:' + item.color + ';font-size:13px;">' + item.label + '</div>';
-            scroll.appendChild(card);
-        });
-    }
-
-    // ==================== 灯箱 ====================
-    function initLightbox() {
-        var lb = document.getElementById('lightbox');
-        if (lb) return;
-
-        var el = document.createElement('div');
-        el.id = 'lightbox';
-        el.className = 'lightbox';
-        el.innerHTML = '<button class="lightbox-close" aria-label="关闭">&times;</button><img class="lightbox-img" src="" alt=""><div class="lightbox-caption"><p class="lightbox-title"></p></div>';
-        document.body.appendChild(el);
-
-        var img = el.querySelector('.lightbox-img');
-        var title = el.querySelector('.lightbox-title');
-        var close = el.querySelector('.lightbox-close');
-
-        document.addEventListener('click', function(e) {
-            var item = e.target.closest('.recent-item') || e.target.closest('.lightbox-trigger') || e.target.closest('.masonry-link');
-            if (item) {
-                var fullUrl = item.getAttribute('data-full');
-                var prompt = item.getAttribute('data-prompt') || item.getAttribute('title') || '';
-                var thumb = item.getAttribute('data-thumb');
-                var urlToUse = fullUrl || thumb;
-                if (urlToUse) {
-                    img.src = urlToUse;
-                    title.textContent = prompt;
-                    el.classList.add('is-open');
-                    document.body.style.overflow = 'hidden';
-                }
+        // 按回车搜索
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                form.dispatchEvent(new Event('submit'));
             }
         });
-
-        function closeLB() { el.classList.remove('is-open'); document.body.style.overflow = ''; }
-        close.addEventListener('click', closeLB);
-        el.addEventListener('click', function(e) { if (e.target === el) closeLB(); });
-        document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && el.classList.contains('is-open')) closeLB(); });
     }
-
 })();
