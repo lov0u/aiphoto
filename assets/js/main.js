@@ -234,64 +234,63 @@
 
         function doGenerate(state) {
             genAbortController = new AbortController();
+            var btnText = document.getElementById('btnText');
 
-            // 显示进度条
-            var progressEl = document.getElementById('genProgress');
-            var progressText = document.getElementById('genProgressText');
-            if (progressEl) {
-                progressEl.style.display = 'block';
-                progressText.textContent = '准备中...';
+            // 更新按钮进度文字
+            function setProgress(text) {
+                if (btnText) btnText.textContent = text;
             }
 
-            // 使用 SSE 流式接收进度
-            var params = new URLSearchParams({
-                action: 'aiphoto_generate',
-                stream: '1',
+            setProgress('🧠 AI 分析中...');
+
+            // 第一步：先调用 AI 增强（快速，单独请求）
+            var aiParams = new URLSearchParams({
+                action: 'aiphoto_ai_enhance',
                 nonce: aiphotoAjax.nonce,
-                prompt: state.prompt || '转换图片',
-                user_prompt: state.userPrompt || state.prompt || '转换图片',
-                size: state.size || '',
-                ratio: state.ratio || '',
+                prompt: state.prompt || '',
                 effect: state.effect || '',
                 lens: state.lens || '',
                 template: currentTemplate || ''
             });
 
-            var eventSource = new EventSource(aiphotoAjax.url + '?' + params.toString());
+            fetch(aiphotoAjax.url + '?' + aiParams.toString())
+                .then(function(r) { return r.json(); })
+                .then(function(aiData) {
+                    setProgress('🎨 生成图片中...');
 
-            eventSource.onmessage = function(e) {
-                var data = JSON.parse(e.data);
+                    // 第二步：用增强后的提示词调用图片生成
+                    var formData = new FormData();
+                    formData.append('action', 'aiphoto_generate');
+                    formData.append('nonce', aiphotoAjax.nonce);
+                    formData.append('prompt', aiData.success ? aiData.data.enhanced : state.prompt);
+                    formData.append('user_prompt', state.userPrompt || state.prompt || '转换图片');
+                    formData.append('size', state.size || '');
+                    formData.append('ratio', state.ratio || '');
+                    formData.append('effect', state.effect || '');
+                    formData.append('lens', state.lens || '');
+                    formData.append('template', currentTemplate || '');
 
-                if (data.progress) {
-                    // 进度更新
-                    if (progressText) progressText.textContent = data.progress;
-                } else if (data.success) {
-                    // 成功
-                    eventSource.close();
+                    return fetch(aiphotoAjax.url, { method: 'POST', body: formData, signal: genAbortController.signal });
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
                     localStorage.removeItem('aiphoto_pending_gen');
-                    if (progressEl) progressEl.style.display = 'none';
-                    showSuccess(data.data);
-                    setLoading(false);
-                } else if (data.error) {
-                    // 错误
-                    eventSource.close();
-                    localStorage.removeItem('aiphoto_pending_gen');
-                    if (progressEl) progressEl.style.display = 'none';
-                    showError(data.error);
-                    setLoading(false);
-                }
-            };
-
-            eventSource.onerror = function() {
-                eventSource.close();
-                localStorage.removeItem('aiphoto_pending_gen');
-                if (progressEl) progressEl.style.display = 'none';
-                // 不显示错误，因为可能是正常结束
-                setLoading(false);
-            };
-
-            // 存储 EventSource 以便停止
-            genAbortController.eventSource = eventSource;
+                    if (data.success) {
+                        showSuccess(data.data);
+                    } else {
+                        showError(data.data.message || aiphotoAjax.i18n.error);
+                    }
+                })
+                .catch(function(err) {
+                    if (err.name === 'AbortError') {
+                        localStorage.removeItem('aiphoto_pending_gen');
+                        setLoading(false);
+                        return;
+                    }
+                    console.error('AIPhoto错误:', err);
+                    showError(aiphotoAjax.i18n.error);
+                })
+                .finally(function() { setLoading(false); });
         }
 
         // 轮询检查图片是否已生成
@@ -405,14 +404,9 @@
         }
 
         function stopGeneration() {
-            if (genAbortController) {
-                if (genAbortController.eventSource) genAbortController.eventSource.close();
-                genAbortController.abort();
-            }
+            if (genAbortController) genAbortController.abort();
             if (genPollTimer) clearInterval(genPollTimer);
             localStorage.removeItem('aiphoto_pending_gen');
-            var progressEl = document.getElementById('genProgress');
-            if (progressEl) progressEl.style.display = 'none';
             setLoading(false);
         }
 
