@@ -126,9 +126,257 @@ function aiphoto_get_settings() {
     return wp_parse_args( get_option( 'aiphoto_settings', array() ), $defaults );
 }
 
+// ============================================================
+// 生图规则增强系统（Flux + Portrait Framework + GPT Image 2）
+// ============================================================
+
 /**
- * AJAX 图片生成
+ * 中文关键词映射（用户输入中文时自动转英文）
  */
+function aiphoto_translate_prompt( $prompt ) {
+    $zh_en_map = array(
+        // 自然
+        '美女' => 'beautiful woman', '帅哥' => 'handsome man', '风景' => 'beautiful landscape',
+        '海边' => 'seaside beach', '日落' => 'golden sunset', '日出' => 'sunrise',
+        '森林' => 'lush forest', '星空' => 'starry night sky', '夜景' => 'night cityscape',
+        '猫' => 'cute cat', '狗' => 'loyal dog', '花' => 'flowers', '山' => 'mountain',
+        '湖' => 'serene lake', '雪' => 'snow', '雨' => 'rain', '月亮' => 'moon',
+        '大海' => 'ocean', '城市' => 'cityscape', '沙漠' => 'desert landscape',
+        '瀑布' => 'waterfall', '樱花' => 'cherry blossom', '竹林' => 'bamboo forest',
+        '草地' => 'green meadow', '河流' => 'river', '大海' => 'ocean',
+        // 风格
+        '古风' => 'traditional Chinese style', '水墨' => 'Chinese ink painting',
+        '二次元' => 'anime style', '赛博朋克' => 'cyberpunk style', '写实' => 'photorealistic',
+        '唯美' => 'beautiful aesthetic', '浪漫' => 'romantic atmosphere', '梦幻' => 'dreamlike ethereal',
+        '复古' => 'vintage retro style', '清新' => 'fresh clean aesthetic', '暗黑' => 'dark moody',
+        '阳光' => 'warm sunshine', '黄昏' => 'dusk twilight', '黎明' => 'dawn light',
+        // 场景
+        '古镇' => 'ancient town', '城堡' => 'castle', '飞船' => 'spaceship', '机器人' => 'robot',
+        '精灵' => 'elf', '龙' => 'dragon', '人物' => 'person', '小孩' => 'child',
+        '老人' => 'elderly person', '情侣' => 'couple', '家庭' => 'family',
+        // 负面词替代
+        '不要模糊' => 'sharp focus, crisp details', '不要噪点' => 'clean image, smooth gradients',
+        '不要水印' => 'pristine image, clean composition', '不要文字' => 'clean surfaces, unmarked',
+        '不要人群' => 'empty scene, solitary subject',
+    );
+    if ( preg_match( '/[\x{4e00}-\x{9fff}]/u', $prompt ) ) {
+        foreach ( $zh_en_map as $zh => $en ) {
+            $prompt = str_replace( $zh, $en, $prompt );
+        }
+    }
+    return $prompt;
+}
+
+/**
+ * 时代/朝代自动推断
+ */
+function aiphoto_era_enhance( $prompt ) {
+    $era_map = array(
+        '古代' => 'ancient China, traditional architecture, period costume',
+        '唐朝' => 'Tang Dynasty, ornate golden details, luxurious silk robes',
+        '宋朝' => 'Song Dynasty, elegant minimalist aesthetic, ink painting style',
+        '明朝' => 'Ming Dynasty, red and gold color scheme, imperial court style',
+        '民国' => 'Republic of China era, qipao, old Shanghai aesthetic',
+        '现代' => 'modern contemporary, urban setting',
+        '未来' => 'futuristic, sci-fi, high-tech environment',
+        '中世纪' => 'medieval European, gothic architecture, knights',
+        '维多利亚' => 'Victorian era, ornate details, gaslight atmosphere',
+    );
+    foreach ( $era_map as $zh => $en ) {
+        if ( mb_strpos( $prompt, $zh ) !== false && mb_stripos( $prompt, $en ) === false ) {
+            $prompt .= ', ' . $en;
+        }
+    }
+    return $prompt;
+}
+
+/**
+ * 依赖自动推断（古装→中式服装等）
+ */
+function aiphoto_dependency_infer( $prompt ) {
+    // 古装自动推导
+    if ( preg_match( '/(古风|ancient|traditional chinese|古代|汉服|唐朝|宋朝|明朝)/i', $prompt ) ) {
+        if ( ! preg_match( '/(clothing|服装|汉服|旗袍|古装|hanfu|qipao)/i', $prompt ) ) {
+            $prompt .= ', traditional Chinese hanfu clothing';
+        }
+        if ( ! preg_match( '/(hair|头发|发型|发髻|updo)/i', $prompt ) ) {
+            $prompt .= ', classical Chinese updo hairstyle';
+        }
+    }
+    // 东亚人种默认发色
+    if ( preg_match( '/(东亚|East Asian|中国人|Japanese|Korean|Chinese|中国|日本|韩国)/i', $prompt ) ) {
+        if ( ! preg_match( '/(hair color|发色|blonde|brown|red|black hair)/i', $prompt ) ) {
+            $prompt .= ', black hair';
+        }
+    }
+    return $prompt;
+}
+
+/**
+ * 人像结构化增强（面部/皮肤/姿势）
+ */
+function aiphoto_portrait_enhance( $prompt ) {
+    $portrait_keywords = array( 'portrait', 'person', 'woman', 'man', '人像', '人物', '美女', '帅哥', 'girl', 'boy', 'lady', 'gentleman' );
+    $is_portrait = false;
+    foreach ( $portrait_keywords as $kw ) {
+        if ( mb_stripos( $prompt, $kw ) !== false ) {
+            $is_portrait = true;
+            break;
+        }
+    }
+    if ( ! $is_portrait ) return $prompt;
+
+    $portrait_suffix = '';
+    if ( ! preg_match( '/(eye|眼睛|眼|eyes)/i', $prompt ) ) {
+        $portrait_suffix .= ', detailed expressive eyes';
+    }
+    if ( ! preg_match( '/(skin|皮肤|肤质|skin texture)/i', $prompt ) ) {
+        $portrait_suffix .= ', natural skin texture';
+    }
+    if ( ! preg_match( '/(pose|standing|sitting|walking|pose|站|坐|走|leaning)/i', $prompt ) ) {
+        $portrait_suffix .= ', natural relaxed pose';
+    }
+    return $prompt . $portrait_suffix;
+}
+
+/**
+ * 色温增强
+ */
+function aiphoto_color_enhance( $prompt ) {
+    if ( preg_match( '/#[0-9A-Fa-f]{6}/', $prompt ) ) {
+        $prompt .= ', brand color accuracy, precise color matching';
+    }
+    $color_temp = array(
+        '红色' => 'warm red tones', '蓝色' => 'cool blue tones',
+        '绿色' => 'natural green tones', '金色' => 'golden warm tones',
+        '紫色' => 'mystical purple tones', '粉色' => 'soft pink tones',
+        '白色' => 'pure white tones', '黑色' => 'deep black tones',
+    );
+    foreach ( $color_temp as $zh => $en ) {
+        if ( mb_strpos( $prompt, $zh ) !== false ) {
+            $prompt .= ', ' . $en;
+        }
+    }
+    return $prompt;
+}
+
+/**
+ * 构图规则自动补充
+ */
+function aiphoto_composition_enhance( $prompt, $effect ) {
+    $has_composition = preg_match( '/(composition|rule of thirds|leading lines|symmetry|framing|构图|三分法|对称)/i', $prompt );
+    if ( ! $has_composition ) {
+        $type_composition = array(
+            'portrait' => ', rule of thirds composition, subject off-center',
+            'landscape' => ', rule of thirds, leading lines to horizon',
+            'product' => ', centered composition, product hero shot',
+            'poster' => ', balanced composition, clear visual hierarchy',
+        );
+        foreach ( $type_composition as $type => $comp ) {
+            if ( mb_stripos( $prompt, $type ) !== false ) {
+                $prompt .= $comp;
+                break;
+            }
+        }
+    }
+    return $prompt;
+}
+
+/**
+ * 提示词增强引擎（光照+质量词）
+ */
+function aiphoto_enhance_prompt( $user_prompt, $effect, $lens ) {
+    $enhanced = $user_prompt;
+
+    // 检测是否缺少光照，自动补充
+    $has_lighting = preg_match( '/(light|sunlight|lighting|光线|光照|阳光|月光|灯光)/i', $user_prompt );
+    if ( ! $has_lighting ) {
+        $effect_lighting = array(
+            'cinematic'      => ', dramatic golden hour lighting with rim light and volumetric rays',
+            'photorealistic' => ', natural soft diffused lighting, gentle shadows',
+            'fantasy'        => ', ethereal mystical lighting with god rays and ambient glow',
+            'cyberpunk'      => ', neon glow lighting with volumetric haze and light reflections',
+            'anime'          => ', bright vibrant lighting, clean cel shading, soft gradients',
+            'watercolor'     => ', soft natural daylight, gentle washes of light',
+            'oil-painting'   => ', dramatic chiaroscuro lighting, strong contrast',
+            '3d-render'      => ', studio three-point lighting, soft shadows, global illumination',
+            'pixel-art'      => ', flat pixel lighting, limited shading',
+            'cartoon'        => ', bright flat cartoon lighting, soft shadows',
+        );
+        if ( isset( $effect_lighting[ $effect ] ) ) {
+            $enhanced .= $effect_lighting[ $effect ];
+        }
+    }
+
+    // 始终追加质量关键词
+    $enhanced .= ', high resolution, sharp focus, detailed, professional quality';
+    return $enhanced;
+}
+
+/**
+ * 提示词长度验证（Flux 最优 30-80 词）
+ */
+function aiphoto_validate_prompt_length( $prompt ) {
+    $word_count = str_word_count( $prompt );
+    if ( $word_count < 10 ) {
+        $prompt .= ', high resolution, detailed, professional quality, sharp focus';
+    }
+    return $prompt;
+}
+
+/**
+ * 负面提示词替代（"不要xxx" → 正面描述）
+ */
+function aiphoto_positive_alternatives( $prompt ) {
+    $replacements = array(
+        'no blur' => 'sharp focus, crisp details, tack-sharp',
+        'no noise' => 'clean image, smooth gradients, low ISO',
+        'no watermark' => 'pristine image, clean composition',
+        'no text' => 'clean surfaces, unmarked, text-free',
+        'no people' => 'empty scene, solitary subject, deserted',
+    );
+    foreach ( $replacements as $old => $new ) {
+        $prompt = str_ireplace( $old, $new, $prompt );
+    }
+    return $prompt;
+}
+
+/**
+ * 内容审核规则（5层防护 - 第2层：后端PHP过滤）
+ */
+function aiphoto_content_check( $prompt ) {
+    $prompt_lower = mb_strtolower( $prompt );
+
+    // 完全阻止的词
+    $blocked_words = array(
+        'nude', 'naked', '裸体', '裸露', '露点', '色情', 'porn', 'sexual',
+        'topless', 'bottomless', 'uncensored', 'nsfw',
+        'blood', 'gore', 'violence', 'kill', 'murder', '血腥', '暴力',
+        'drug', 'weapon', 'gun', 'bomb', '毒品', '武器', '枪',
+    );
+    foreach ( $blocked_words as $word ) {
+        if ( mb_strpos( $prompt_lower, $word ) !== false ) {
+            return array( 'pass' => false, 'reason' => 'blocked_word', 'message' => '提示词包含不当内容，请修改' );
+        }
+    }
+
+    // 需要审核的词（标记但不直接拒绝）
+    $review_words = array(
+        'bikini', '泳装', '比基尼', '内衣', 'underwear', 'lingerie',
+        'sensual', 'sexy', '性感', '诱惑', 'seductive', 'boudoir',
+    );
+    foreach ( $review_words as $word ) {
+        if ( mb_strpos( $prompt_lower, $word ) !== false ) {
+            return array( 'pass' => false, 'reason' => 'need_review', 'message' => '该内容需要审核，暂不支持生成' );
+        }
+    }
+
+    return array( 'pass' => true );
+}
+
+// ============================================================
+// AJAX 图片生成
+// ============================================================
 function aiphoto_generate_image() {
     if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( $_POST['nonce'], 'aiphoto_nonce' ) ) {
         wp_send_json_error( array( 'message' => __( '安全验证失败。', 'aiphoto' ) ) );
@@ -171,38 +419,64 @@ function aiphoto_generate_image() {
     $effect = sanitize_text_field( $_POST['effect'] ?? '' );
     $lens   = sanitize_text_field( $_POST['lens'] ?? '' );
 
-    // 特效和镜头翻译
+    // 特效和镜头翻译（增强版 - 参考 Flux Best Practices）
     $effect_map = array(
-        'cinematic'       => 'cinematic lighting, dramatic atmosphere, movie scene quality, professional color grading, film grain, volumetric lighting',
-        'pixel-art'       => '像素艺术风格，复古8位游戏美学，清晰的像素细节，怀旧的复古氛围',
-        'cartoon'         => 'cartoon style, vibrant colors, bold outlines, playful and fun, animated movie quality',
-        '3d-render'       => '3D rendered, octane render, ray tracing, ultra detailed, studio lighting, physically based rendering',
-        'watercolor'      => 'watercolor painting style, soft translucent colors, paper texture, artistic brush strokes, delicate washes',
-        'oil-painting'    => 'oil painting style, rich textures, impasto technique, classical art, canvas texture, dramatic chiaroscuro',
-        'anime'           => 'anime style, Japanese animation aesthetic, cel shading, vibrant colors, detailed eyes, manga quality',
-        'photorealistic'  => 'photorealistic, ultra HD photography, natural lighting, shot on professional DSLR, hyper detailed, sharp focus',
-        'cyberpunk'       => 'cyberpunk style, neon lights, futuristic cityscape, high tech low life, glowing elements, dark atmosphere',
-        'fantasy'         => 'fantasy art style, magical atmosphere, ethereal lighting, mystical elements, enchanted forest, dreamlike quality',
+        'cinematic'      => 'cinematic lighting, dramatic atmosphere, movie scene quality, professional color grading, film grain, volumetric lighting, anamorphic lens flare, shallow depth of field, warm color temperature',
+        'pixel-art'      => 'pixel art style, retro 8-bit game aesthetic, clear pixel details, nostalgic retro atmosphere, limited color palette, crisp edges, dithering',
+        'cartoon'        => 'cartoon style, vibrant colors, bold outlines, playful and fun, animated movie quality, clean shapes, expressive features, cel shading',
+        '3d-render'      => '3D rendered, octane render, ray tracing, ultra detailed, studio lighting, physically based rendering, subsurface scattering, global illumination',
+        'watercolor'     => 'watercolor painting style, soft translucent colors, paper texture, artistic brush strokes, delicate washes, wet-on-wet blending, pigment granulation',
+        'oil-painting'   => 'oil painting style, rich textures, impasto technique, classical art, canvas texture, dramatic chiaroscuro, visible brushwork, color mixing',
+        'anime'          => 'anime style, Japanese animation aesthetic, cel shading, vibrant colors, detailed eyes, manga quality, clean linework, dynamic composition, studio quality, soft gradients',
+        'photorealistic' => 'photorealistic, ultra HD photography, natural lighting, shot on professional DSLR, hyper detailed, sharp focus, RAW photo, 8K resolution, professional color science, accurate skin tones',
+        'cyberpunk'      => 'cyberpunk style, neon lights, futuristic cityscape, high tech low life, glowing elements, dark atmosphere, rain-slicked streets, volumetric haze, holographic displays',
+        'fantasy'        => 'fantasy art style, magical atmosphere, ethereal lighting, mystical elements, dreamlike quality, volumetric fog, god rays, concept art, rich color palette, epic scale',
     );
 
     $lens_map = array(
-        'wide-angle'  => 'wide angle lens, expansive perspective, dramatic depth',
-        'macro'       => 'macro photography, extreme close-up, shallow depth of field, bokeh background',
-        'birdseye'    => 'bird\'s eye view, aerial perspective, top-down shot, panoramic overview',
-        'eye-level'   => 'eye level shot, natural perspective, documentary style',
-        'low-angle'   => 'low angle shot, dramatic perspective, towering subject, looking up',
-        'close-up'    => 'close-up shot, intimate framing, detailed focus, shallow depth of field',
-        'portrait'    => 'portrait photography, professional headshot, studio lighting, blurred background',
-        'panoramic'   => 'panoramic view, wide sweeping landscape, ultra wide angle, cinematic aspect ratio',
+        'wide-angle' => 'wide angle lens 24mm, expansive perspective, dramatic depth, leading lines, foreground interest, deep depth of field, architectural distortion',
+        'macro'      => 'macro photography, extreme close-up, shallow depth of field, bokeh background, 100mm macro lens, razor sharp detail, magnified textures',
+        'birdseye'   => 'bird\'s eye view, aerial perspective, top-down shot, panoramic overview, drone photography, map-like composition, vast scale',
+        'eye-level'  => 'eye level shot, natural perspective, documentary style, neutral angle, immersive viewing, human-scale composition',
+        'low-angle'  => 'low angle shot, dramatic perspective, towering subject, looking up, powerful imposing, worm\'s eye view, strong vertical lines',
+        'close-up'   => 'close-up shot, intimate framing, detailed focus, shallow depth of field, macro lens 100mm, creamy bokeh, emotional connection',
+        'portrait'   => 'portrait photography, professional headshot, studio lighting, blurred background, bokeh, 85mm f/1.4 lens, shallow depth of field, subject separation, catchlight in eyes',
+        'panoramic'  => 'panoramic view, wide sweeping landscape, ultra wide angle, cinematic aspect ratio, stitched panorama, vast horizon, epic scale',
     );
 
-    // 将特效和镜头追加到提示词
+    // ========== 增强链：11步提示词优化 ==========
+    // 1. 中文翻译
+    $prompt = aiphoto_translate_prompt( $prompt );
+    // 2. 负面提示词替代
+    $prompt = aiphoto_positive_alternatives( $prompt );
+    // 3. 时代/朝代推断
+    $prompt = aiphoto_era_enhance( $prompt );
+    // 4. 依赖自动推断（古装→中式服装等）
+    $prompt = aiphoto_dependency_infer( $prompt );
+    // 5. 人像结构化增强
+    $prompt = aiphoto_portrait_enhance( $prompt );
+    // 6. 色温增强
+    $prompt = aiphoto_color_enhance( $prompt );
+    // 7. 构图规则自动补充
+    $prompt = aiphoto_composition_enhance( $prompt, $effect );
+    // 8. 提示词增强（光照+质量词）
+    $prompt = aiphoto_enhance_prompt( $prompt, $effect, $lens );
+    // 9. 提示词长度验证
+    $prompt = aiphoto_validate_prompt_length( $prompt );
+    // 10. 内容审核
+    $check_result = aiphoto_content_check( $prompt );
+    if ( ! $check_result['pass'] ) {
+        wp_send_json_error( array( 'message' => $check_result['message'] ) );
+        exit;
+    }
+    // 11. 追加效果/镜头关键词
     if ( ! empty( $effect ) && isset( $effect_map[ $effect ] ) ) {
         $prompt .= ', ' . $effect_map[ $effect ];
     }
     if ( ! empty( $lens ) && isset( $lens_map[ $lens ] ) ) {
         $prompt .= ', ' . $lens_map[ $lens ];
     }
+    error_log( 'AIPhoto: [ENHANCE] Final prompt: ' . $prompt );
 
     $body = array(
         'model'  => $model,
