@@ -28,7 +28,7 @@
     inset: 0;
     z-index: -1;
     top: 64px; /* 从 header 下方开始 */
-    background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 30%, #f0fdf4 60%, #fffbeb 100%);
+    background: #ffffff;
     pointer-events: none;
 }
 
