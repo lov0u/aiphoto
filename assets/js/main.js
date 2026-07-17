@@ -156,7 +156,6 @@
         var input = document.getElementById('generatorPrompt');
         var btn = document.getElementById('generateBtn');
         var btnText = document.getElementById('btnText');
-        var btnSpinner = document.getElementById('btnSpinner');
         var result = document.getElementById('generatorResult');
         var resultImage = document.getElementById('resultImage');
         var errorMessage = document.getElementById('errorMessage');
@@ -235,13 +234,29 @@
         function doGenerate(state) {
             genAbortController = new AbortController();
             var btnText = document.getElementById('btnText');
+            var progressBox = document.getElementById('genProgressBox');
 
-            // 更新按钮进度文字
-            function setProgress(text) {
-                if (btnText) btnText.textContent = text;
+            // 清空并显示进度框
+            function showProgress() {
+                if (progressBox) {
+                    progressBox.style.display = 'block';
+                    progressBox.innerHTML = '';
+                }
             }
 
-            setProgress('🧠 AI 分析中...');
+            // 追加一条进度消息
+            function addProgress(text) {
+                if (progressBox) {
+                    var line = document.createElement('div');
+                    line.textContent = '> ' + text;
+                    progressBox.appendChild(line);
+                    progressBox.scrollTop = progressBox.scrollHeight;
+                }
+            }
+
+            showProgress();
+            addProgress('开始生成...');
+            addProgress('AI 正在分析提示词...');
 
             // 第一步：先调用 AI 增强（快速，单独请求）
             var aiParams = new URLSearchParams({
@@ -374,7 +389,6 @@
             if (on) {
                 btn.disabled = true;
                 btnText.textContent = '生成中';
-                btnSpinner.style.display = 'inline-block';
                 // 创建停止按钮到容器内
                 var stopBtn = document.getElementById('stopGenBtn');
                 if (!stopBtn) {
@@ -396,7 +410,6 @@
             } else {
                 btn.disabled = input.value.trim().length === 0 && img2imgFiles.length === 0;
                 btnText.textContent = '生成';
-                btnSpinner.style.display = 'none';
                 var stopBtn = document.getElementById('stopGenBtn');
                 if (stopBtn) stopBtn.style.display = 'none';
                 btn.parentNode.style.flexDirection = 'row';

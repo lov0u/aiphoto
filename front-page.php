@@ -469,13 +469,16 @@ if ( $page === 'home' && isset( $_SERVER['REQUEST_URI'] ) ) {
                         </div>
                     </div>
 
+                    <!-- 工作进度区域 -->
+                    <div id="genProgressBox" style="display:none;margin-top:8px;border:1px solid #e0e0e0;border-radius:8px;padding:10px 14px;background:#fafafa;min-height:60px;max-height:150px;overflow-y:auto;font-size:13px;color:#555;font-family:monospace;line-height:1.8;">
+                    </div>
+
                     <div id="genBtnWrap" style="display:flex;align-items:stretch;gap:0;margin-top:8px;">
                         <button type="submit" class="gen-submit-btn" id="generateBtn" disabled style="margin-top:0;flex:1;">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                             </svg>
                             <span id="btnText">生成图片</span>
-                            <span id="btnSpinner" class="spinner" style="display:none;"></span>
                         </button>
                     </div>
                 </form>
