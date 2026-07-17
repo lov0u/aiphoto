@@ -406,7 +406,7 @@ html, body.chat-page {
 .chat-messages {
     flex: 1;
     overflow-y: auto;
-    padding: 24px 0;
+    padding: 24px 40px 140px;
     scroll-behavior: smooth;
     overscroll-behavior: contain;
 }
@@ -648,13 +648,18 @@ html, body.chat-page {
     color: #6b7280;
 }
 
-/* 输入区域（Agnes AI 风格 - 居中） */
+/* 输入区域（悬浮在底部） */
 .chat-input-area {
-    padding: 16px 40px 12px;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 12px 40px 16px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    flex-shrink: 0;
+    background: linear-gradient(to top, rgba(255,255,255,1) 60%, rgba(255,255,255,0.8) 80%, rgba(255,255,255,0) 100%);
+    z-index: 5;
 }
 
 .chat-input-container {
@@ -1131,19 +1136,23 @@ html, body.chat-page {
 
     function init() {
         loadChatList();
+        var welcomeTags = document.getElementById('chatWelcomeTags');
+
         // 检查是否有保存的当前对话
         var lastChatId = localStorage.getItem('aiphoto_current_chat');
         if (lastChatId) {
             var chats = getAllChats();
             if (chats[lastChatId]) {
                 loadChat(lastChatId);
+                // 有对话时隐藏快捷标签
+                if (welcomeTags) welcomeTags.style.display = 'none';
             } else {
                 createNewChat();
             }
         } else {
             // 没有保存的对话，显示欢迎界面
             chatMessages.innerHTML = getWelcomeHTML();
-            document.getElementById('chatWelcomeTags').style.display = 'flex';
+            if (welcomeTags) welcomeTags.style.display = 'flex';
             bindWelcomeEvents();
         }
         bindEvents();
