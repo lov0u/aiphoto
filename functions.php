@@ -527,7 +527,7 @@ function aiphoto_ai_enhance_prompt( $user_prompt, $effect = '', $lens = '', $tem
             'Content-Type'  => 'application/json',
         ),
         'body'    => wp_json_encode( $body ),
-        'timeout' => 30,
+        'timeout' => 45,
     ) );
 
     if ( is_wp_error( $response ) ) {
@@ -535,7 +535,9 @@ function aiphoto_ai_enhance_prompt( $user_prompt, $effect = '', $lens = '', $tem
         return $user_prompt;
     }
 
-    $data = json_decode( wp_remote_retrieve_body( $response ), true );
+    $resp_body = wp_remote_retrieve_body( $response );
+    $data = json_decode( $resp_body, true );
+
     if ( isset( $data['choices'][0]['message']['content'] ) ) {
         $enhanced = trim( $data['choices'][0]['message']['content'] );
         error_log( 'AIPhoto: [AI_ENHANCE] Original: ' . $user_prompt );
@@ -543,6 +545,8 @@ function aiphoto_ai_enhance_prompt( $user_prompt, $effect = '', $lens = '', $tem
         return $enhanced;
     }
 
+    // AI 返回异常，记录完整响应
+    error_log( 'AIPhoto: [AI_ENHANCE] Unexpected response: ' . mb_substr( $resp_body, 0, 500 ) );
     return $user_prompt;
 }
 
@@ -815,43 +819,46 @@ function aiphoto_generate_image() {
         'panoramic'  => 'panoramic view, wide sweeping landscape, ultra wide angle, cinematic aspect ratio, stitched panorama, vast horizon, epic scale',
     );
 
-    // ========== 增强链：12步提示词优化 ==========
-    // 0. AI 提示词增强（用 agnes-2.0-flash 分析用户输入，生成高质量英文提示词）
+    // ========== 增强链：AI 为主，精简后处理 ==========
+    // 0. AI 提示词增强（核心：用 agnes-2.0-flash + SKILL 知识库生成高质量英文提示词）
     $ai_enhanced = aiphoto_ai_enhance_prompt( $prompt, $effect, $lens, $template );
     if ( ! empty( $ai_enhanced ) && $ai_enhanced !== $prompt ) {
         $prompt = $ai_enhanced;
+    } else {
+        // AI 失败时，用基础增强作为后备
+        $prompt = aiphoto_translate_prompt( $prompt );
+        $prompt = aiphoto_enhance_prompt( $prompt, $effect, $lens );
     }
-    // 1. 中文翻译（AI 可能没有完全翻译的部分）
-    $prompt = aiphoto_translate_prompt( $prompt );
-    // 2. 负面提示词替代
-    $prompt = aiphoto_positive_alternatives( $prompt );
-    // 3. 时代/朝代推断
-    $prompt = aiphoto_era_enhance( $prompt );
-    // 4. 依赖自动推断（古装→中式服装等）
-    $prompt = aiphoto_dependency_infer( $prompt );
-    // 5. 人像结构化增强（仅人像镜头时增强）
-    $prompt = aiphoto_portrait_enhance( $prompt, $lens );
-    // 6. 色温增强
-    $prompt = aiphoto_color_enhance( $prompt );
-    // 7. 构图规则自动补充
-    $prompt = aiphoto_composition_enhance( $prompt, $effect );
-    // 8. 提示词增强（光照+质量词）
-    $prompt = aiphoto_enhance_prompt( $prompt, $effect, $lens );
-    // 9. 提示词长度验证
-    $prompt = aiphoto_validate_prompt_length( $prompt );
-    // 10. 内容审核
+
+    // 1. 内容审核（检查 AI 生成的提示词）
     $check_result = aiphoto_content_check( $prompt );
     if ( ! $check_result['pass'] ) {
         wp_send_json_error( array( 'message' => $check_result['message'] ) );
         exit;
     }
-    // 11. 追加效果/镜头关键词
+
+    // 2. 追加效果/镜头关键词（AI 已处理大部分，这里只做补充）
     if ( ! empty( $effect ) && isset( $effect_map[ $effect ] ) ) {
-        $prompt .= ', ' . $effect_map[ $effect ];
+        // 检查 AI 输出是否已包含效果关键词，避免重复
+        $effect_keywords = explode( ',', $effect_map[ $effect ] );
+        $first_keyword = trim( $effect_keywords[0] );
+        if ( stripos( $prompt, $first_keyword ) === false ) {
+            $prompt .= ', ' . $effect_map[ $effect ];
+        }
     }
     if ( ! empty( $lens ) && isset( $lens_map[ $lens ] ) ) {
-        $prompt .= ', ' . $lens_map[ $lens ];
+        $lens_keywords = explode( ',', $lens_map[ $lens ] );
+        $first_keyword = trim( $lens_keywords[0] );
+        if ( stripos( $prompt, $first_keyword ) === false ) {
+            $prompt .= ', ' . $lens_map[ $lens ];
+        }
     }
+
+    // 3. 确保画质关键词（如果 AI 没有添加）
+    if ( stripos( $prompt, '8K' ) === false && stripos( $prompt, 'resolution' ) === false ) {
+        $prompt .= ', 8K resolution, sharp focus, detailed';
+    }
+
     error_log( 'AIPhoto: [ENHANCE] Final prompt: ' . $prompt );
 
     $body = array(
@@ -883,6 +890,7 @@ function aiphoto_generate_image() {
     ) );
 
     if ( is_wp_error( $response ) ) {
+        error_log( 'AIPhoto: [GENERATE] API error: ' . $response->get_error_message() );
         wp_send_json_error( array( 'message' => $response->get_error_message() ) );
     }
 
