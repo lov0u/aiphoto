@@ -795,11 +795,11 @@ html, body.chat-page {
 /* 滚动按钮（输入框正上方偏左） */
 .chat-scroll-btn {
     position: absolute;
-    bottom: 145px;
+    bottom: 180px;
     left: 50%;
     transform: translateX(-50%);
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     background: #fff;
     border: 1px solid #d1d5db;
     border-radius: 50%;
@@ -807,7 +807,7 @@ html, body.chat-page {
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
     z-index: 10;
     opacity: 0;
     transition: all 200ms ease;
