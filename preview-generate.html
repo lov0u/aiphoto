@@ -6,34 +6,121 @@
 <title>AIPhoto - Agnes 风格预览</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
+/* ===== 模拟页眉 ===== */
+.sim-header {
+    height: 64px;
+    background: #ffffff;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.sim-header-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.sim-header-logo svg {
+    width: 28px;
+    height: 28px;
+}
+
+.sim-header-nav {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.sim-header-nav a {
+    font-size: 14px;
+    color: #666;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.sim-header-nav a:hover {
+    color: #1a1a1a;
+}
+
+.sim-header-nav .nav-active {
+    color: #1a1a1a;
+}
+
+.sim-header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.sim-header-right .credits-badge {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    background: linear-gradient(135deg, rgba(168,224,99,0.15), rgba(86,171,145,0.15));
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #56ab91;
+}
+
+.sim-header-right .upgrade-btn {
+    padding: 5px 14px;
+    background: linear-gradient(135deg, #a8e063, #56ab91);
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.sim-header-right .avatar-circle {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #b3e5fc, #80deea);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    cursor: pointer;
+}
+
 /* ===== CSS 变量 ===== */
 :root {
     --agnes-green-start: #a8e063;
     --agnes-green-end: #56ab91;
-    --agnes-yellow: #f9d423;
     --agnes-blue: #4a6cf7;
-    --agnes-purple: #7c3aed;
-    --agnes-bg: #ffffff;
-    --agnes-card-bg: #ffffff;
     --agnes-text-primary: #1a1a1a;
     --agnes-text-secondary: #8c8c8c;
     --agnes-text-placeholder: #bfbfbf;
     --agnes-border: #eeeeee;
     --agnes-shadow: 0 2px 20px rgba(0,0,0,0.06);
     --agnes-shadow-hover: 0 4px 30px rgba(0,0,0,0.1);
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 20px;
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 18px;
     --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ===== 全局重置 ===== */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 .agnes-global-bg {
     position: fixed;
     inset: 0;
     z-index: -1;
+    top: 64px;
     background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 30%, #f0fdf4 60%, #fffbeb 100%);
     pointer-events: none;
 }
@@ -41,178 +128,126 @@
 body {
     font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     color: var(--agnes-text-primary);
-    background: transparent;
 }
 
 /* ===== App 布局 ===== */
 .agnes-app {
     display: flex;
-    min-height: 100vh;
+    min-height: calc(100vh - 64px);
 }
 
-/* ===== 侧边栏 ===== */
-.agnes-sidebar {
+/* ===== 左侧作品列表 ===== */
+.agnes-recent-sidebar {
     position: fixed;
     left: 0;
-    top: 0;
+    top: 64px;
     bottom: 0;
-    width: 72px;
+    width: 220px;
     background: #ffffff;
     border-right: 1px solid var(--agnes-border);
     display: flex;
     flex-direction: column;
-    align-items: center;
-    padding: 20px 0;
-    z-index: 100;
-}
-
-.sidebar-logo {
-    margin-bottom: 32px;
-}
-
-.sidebar-nav {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    flex: 1;
-}
-
-.sidebar-nav-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    padding: 10px 0;
-    color: var(--agnes-text-secondary);
-    text-decoration: none;
-    font-size: 10px;
-    border-radius: var(--radius-sm);
+    z-index: 80;
+    transform: translateX(-100%);
     transition: var(--transition);
-    width: 52px;
-    cursor: pointer;
+    overflow: hidden;
 }
 
-.sidebar-nav-item:hover {
-    color: var(--agnes-text-primary);
-    background: #f8f8f8;
+.agnes-recent-sidebar.visible {
+    transform: translateX(0);
 }
 
-.sidebar-nav-item.active {
-    color: var(--agnes-green-end);
-    background: linear-gradient(135deg, rgba(168, 224, 99, 0.1), rgba(86, 171, 145, 0.1));
-}
-
-.sidebar-bottom {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-/* ===== 主内容区 ===== */
-.agnes-main {
-    flex: 1;
-    margin-left: 72px;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-}
-
-/* ===== 顶栏 ===== */
-.agnes-topbar {
+.recent-sidebar-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 32px;
-    background: rgba(255,255,255,0.8);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--agnes-border);
-    position: sticky;
-    top: 0;
-    z-index: 50;
-}
-
-.topbar-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+    padding: 12px 12px 8px;
+    gap: 4px;
 }
 
 .new-work-btn {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 6px 14px;
-    background: #ffffff;
-    border: 1px solid var(--agnes-border);
+    padding: 5px 10px;
+    background: transparent;
+    border: none;
     border-radius: var(--radius-sm);
     color: var(--agnes-text-primary);
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: var(--transition);
-}
-
-.new-work-btn:hover {
-    border-color: var(--agnes-green-end);
-    color: var(--agnes-green-end);
-}
-
-.topbar-right {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
-
-.credits-badge {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 4px 12px;
-    background: linear-gradient(135deg, rgba(168, 224, 99, 0.15), rgba(86, 171, 145, 0.15));
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--agnes-green-end);
-}
-
-.upgrade-btn {
-    padding: 6px 16px;
-    background: linear-gradient(135deg, var(--agnes-green-start), var(--agnes-green-end));
-    color: #ffffff;
-    border: none;
-    border-radius: 20px;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     cursor: pointer;
     transition: var(--transition);
 }
 
-.upgrade-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(86, 171, 145, 0.3);
-}
+.new-work-btn:hover { background: #f5f5f5; }
 
-.avatar-circle {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #b3e5fc, #80deea);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #ffffff;
+.sidebar-collapse-btn {
+    width: 24px; height: 24px;
+    background: transparent; border: none;
+    border-radius: var(--radius-sm);
+    color: var(--agnes-text-secondary);
     cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: var(--transition);
 }
 
-/* ===== 内容区 ===== */
+.sidebar-collapse-btn:hover { background: #f5f5f5; }
+
+.recent-list {
+    flex: 1; overflow-y: auto;
+    padding: 4px 8px 12px;
+}
+
+.recent-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px; border-radius: var(--radius-sm);
+    cursor: pointer; transition: var(--transition);
+    margin-bottom: 2px;
+}
+
+.recent-item:hover { background: #f5f5f5; }
+
+.recent-thumb {
+    width: 44px; height: 44px;
+    border-radius: var(--radius-sm);
+    overflow: hidden; flex-shrink: 0;
+    background: #f0f0f0;
+}
+
+.recent-thumb img {
+    width: 100%; height: 100%; object-fit: cover;
+}
+
+.recent-info { flex: 1; min-width: 0; overflow: hidden; }
+
+.recent-title {
+    font-size: 11px; font-weight: 600;
+    color: var(--agnes-text-primary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.recent-prompt {
+    font-size: 10px; color: var(--agnes-text-secondary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    margin-top: 2px;
+}
+
+/* ===== 主内容区 ===== */
+.agnes-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 64px);
+}
+
 .agnes-content {
     flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 40px 32px 80px;
-    max-width: 960px;
+    padding: 60px 32px 80px;
+    max-width: 880px;
     margin: 0 auto;
     width: 100%;
 }
@@ -224,62 +259,52 @@ body {
     align-items: center;
     justify-content: center;
     flex: 1;
-    min-height: 400px;
+    min-height: 350px;
     position: relative;
     text-align: center;
 }
 
-.welcome-text {
-    position: relative;
-    z-index: 2;
-}
+.welcome-text { position: relative; z-index: 2; }
 
 .welcome-title {
-    font-size: 2rem;
-    font-weight: 700;
+    font-size: 1.75rem; font-weight: 700;
     color: var(--agnes-text-primary);
-    margin: 0 0 8px;
-    line-height: 1.3;
+    margin: 0 0 8px; line-height: 1.3;
 }
 
 .welcome-subtitle {
-    font-size: 2.25rem;
-    font-weight: 800;
+    font-size: 2rem; font-weight: 800;
     background: linear-gradient(135deg, var(--agnes-green-start), var(--agnes-green-end));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    margin: 0;
-    line-height: 1.3;
+    margin: 0; line-height: 1.3;
 }
 
 .welcome-visual {
     position: absolute;
-    right: -100px;
-    top: 50%;
+    right: -80px; top: 50%;
     transform: translateY(-50%);
-    width: 300px;
-    height: 300px;
+    width: 260px; height: 260px;
     pointer-events: none;
 }
 
 .visual-ring {
-    position: absolute;
-    inset: 0;
+    position: absolute; inset: 0;
     border-radius: 50%;
-    border: 3px solid rgba(168, 224, 99, 0.2);
+    border: 3px solid rgba(168, 224, 99, 0.15);
     animation: ringPulse 4s ease-in-out infinite;
 }
 
 .visual-ring--2 {
-    inset: -30px;
-    border-color: rgba(86, 171, 145, 0.15);
+    inset: -25px;
+    border-color: rgba(86, 171, 145, 0.1);
     animation-delay: -1.3s;
 }
 
 .visual-ring--3 {
-    inset: -60px;
-    border-color: rgba(249, 212, 35, 0.1);
+    inset: -50px;
+    border-color: rgba(249, 212, 35, 0.06);
     animation-delay: -2.6s;
 }
 
@@ -306,43 +331,37 @@ body {
 }
 
 .card-inner {
-    background: var(--agnes-card-bg);
+    background: #ffffff;
     border: 1px solid var(--agnes-border);
-    border-radius: var(--agnes-radius-lg);
+    border-radius: var(--radius-xl);
     box-shadow: var(--agnes-shadow);
-    padding: 20px;
+    padding: 18px;
     transition: var(--transition);
 }
 
 .card-inner:focus-within {
     box-shadow: var(--agnes-shadow-hover);
-    border-color: rgba(86, 171, 145, 0.3);
+    border-color: rgba(86, 171, 145, 0.25);
 }
 
-/* 上传区域 */
 .card-upload-area {
     position: relative;
     display: flex;
     align-items: flex-start;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 .upload-plus-btn {
-    width: 44px;
-    height: 44px;
-    min-width: 44px;
+    width: 40px; height: 40px; min-width: 40px;
     background: #ffffff;
     border: 1px dashed #d0d0d0;
     border-radius: var(--radius-sm);
-    font-size: 24px;
-    font-weight: 300;
+    font-size: 22px; font-weight: 300;
     color: #999;
     cursor: pointer;
     transition: var(--transition);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 12px;
+    display: flex; align-items: center; justify-content: center;
+    margin-right: 10px;
 }
 
 .upload-plus-btn:hover {
@@ -352,134 +371,86 @@ body {
 }
 
 .upload-previews {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    flex: 1;
+    display: flex; gap: 6px; flex-wrap: wrap; flex: 1;
 }
 
 .upload-preview-item {
     position: relative;
-    width: 64px;
-    height: 64px;
+    width: 56px; height: 56px;
     border-radius: var(--radius-sm);
     overflow: hidden;
     border: 1px solid var(--agnes-border);
 }
 
 .upload-preview-item img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+    width: 100%; height: 100%; object-fit: cover;
 }
 
 .upload-preview-remove {
-    position: absolute;
-    top: 2px;
-    right: 2px;
-    width: 18px;
-    height: 18px;
+    position: absolute; top: 1px; right: 1px;
+    width: 16px; height: 16px;
     background: rgba(0,0,0,0.6);
-    color: #fff;
-    border: none;
-    border-radius: 50%;
-    font-size: 12px;
-    line-height: 1;
+    color: #fff; border: none;
+    border-radius: 50%; font-size: 10px;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
 }
 
-/* 文本输入 */
 .card-textarea {
-    width: 100%;
-    min-height: 48px;
-    max-height: 200px;
-    padding: 12px 0;
-    border: none;
-    outline: none;
+    width: 100%; min-height: 44px; max-height: 180px;
+    padding: 10px 0;
+    border: none; outline: none;
     resize: none;
-    font-size: 15px;
-    line-height: 1.6;
+    font-size: 14px; line-height: 1.6;
     color: var(--agnes-text-primary);
     background: transparent;
     font-family: inherit;
 }
 
-.card-textarea::placeholder {
-    color: var(--agnes-text-placeholder);
-}
+.card-textarea::placeholder { color: var(--agnes-text-placeholder); }
 
-/* 底部工具栏 */
 .card-toolbar {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding-top: 12px;
+    display: flex; align-items: center; gap: 4px;
+    padding-top: 10px;
     border-top: 1px solid #f0f0f0;
 }
 
-.toolbar-group {
-    display: flex;
-    align-items: center;
-}
+.toolbar-group { display: flex; align-items: center; }
 
 .toolbar-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
-    background: transparent;
-    border: none;
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 10px;
+    background: transparent; border: none;
     border-radius: var(--radius-sm);
     color: var(--agnes-text-secondary);
-    font-size: 13px;
-    font-weight: 500;
+    font-size: 12px; font-weight: 500;
     cursor: pointer;
     transition: var(--transition);
     white-space: nowrap;
 }
 
-.toolbar-btn:hover {
-    background: #f5f5f5;
-    color: var(--agnes-text-primary);
-}
+.toolbar-btn:hover { background: #f5f5f5; color: var(--agnes-text-primary); }
 
-.toolbar-btn--model {
-    color: var(--agnes-blue);
-}
-
-.toolbar-btn--model:hover {
-    background: rgba(74, 108, 247, 0.08);
-}
+.toolbar-btn--model { color: var(--agnes-blue); }
+.toolbar-btn--model:hover { background: rgba(74, 108, 247, 0.08); }
 
 .toolbar-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+    display: flex; align-items: center; gap: 10px;
     margin-left: auto;
 }
 
 .credits-small {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 12px;
-    color: var(--agnes-text-secondary);
+    display: flex; align-items: center; gap: 3px;
+    font-size: 11px; color: var(--agnes-text-secondary);
 }
 
 .send-btn {
-    width: 36px;
-    height: 36px;
-    background: #e0e0e0;
-    border: none;
+    width: 34px; height: 34px;
+    background: #e0e0e0; border: none;
     border-radius: 50%;
     color: #ffffff;
     cursor: not-allowed;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     transition: var(--transition);
 }
 
@@ -496,16 +467,12 @@ body {
 
 /* ===== 发现 Tabs ===== */
 .agnes-discover-tabs {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 24px;
-    margin-bottom: 16px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 24px; margin-bottom: 16px;
 }
 
 .discover-tabs-inner {
-    display: flex;
-    gap: 4px;
+    display: flex; gap: 4px;
     background: #f5f5f5;
     border-radius: 20px;
     padding: 3px;
@@ -513,8 +480,7 @@ body {
 
 .discover-tab {
     padding: 6px 20px;
-    background: transparent;
-    border: none;
+    background: transparent; border: none;
     border-radius: 18px;
     font-size: 13px;
     color: var(--agnes-text-secondary);
@@ -537,26 +503,19 @@ body {
 }
 
 /* ===== 底部推荐 ===== */
-.agnes-recommended {
-    width: 100%;
-    overflow: hidden;
-}
+.agnes-recommended { width: 100%; overflow: hidden; }
 
 .rec-scroll {
-    display: flex;
-    gap: 12px;
+    display: flex; gap: 12px;
     overflow-x: auto;
     padding-bottom: 8px;
     scrollbar-width: none;
 }
 
-.rec-scroll::-webkit-scrollbar {
-    display: none;
-}
+.rec-scroll::-webkit-scrollbar { display: none; }
 
 .rec-card {
-    min-width: 200px;
-    height: 120px;
+    min-width: 180px; height: 110px;
     border-radius: var(--radius-md);
     overflow: hidden;
     position: relative;
@@ -567,56 +526,44 @@ body {
 }
 
 .rec-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
 }
 
 .rec-card img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+    width: 100%; height: 100%; object-fit: cover;
 }
 
 .rec-card-overlay {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 12px;
-    background: linear-gradient(transparent, rgba(0,0,0,0.6));
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 10px;
+    background: linear-gradient(transparent, rgba(0,0,0,0.5));
     color: #fff;
-    font-size: 12px;
-    font-weight: 500;
+    font-size: 11px; font-weight: 500;
 }
 
 /* ===== 设置弹窗 ===== */
 .agnes-settings-overlay {
-    position: fixed;
-    inset: 0;
+    position: fixed; inset: 0;
     background: rgba(0,0,0,0.3);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
     z-index: 200;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    visibility: hidden;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; visibility: hidden;
     transition: var(--transition);
 }
 
 .agnes-settings-overlay.open {
-    opacity: 1;
-    visibility: visible;
+    opacity: 1; visibility: visible;
 }
 
 .agnes-settings-panel {
     background: #ffffff;
-    border-radius: var(--agnes-radius-lg);
+    border-radius: var(--radius-xl);
     box-shadow: 0 20px 60px rgba(0,0,0,0.15);
     padding: 28px;
-    width: 100%;
-    max-width: 520px;
+    width: 100%; max-width: 500px;
     position: relative;
     transform: translateY(20px);
     transition: var(--transition);
@@ -627,54 +574,41 @@ body {
 }
 
 .settings-title {
-    font-size: 18px;
-    font-weight: 700;
+    font-size: 18px; font-weight: 700;
     color: var(--agnes-text-primary);
     margin: 0 0 24px;
 }
 
-.settings-section {
-    margin-bottom: 28px;
-}
+.settings-section { margin-bottom: 28px; }
 
 .settings-label {
     display: block;
-    font-size: 13px;
-    font-weight: 600;
+    font-size: 12px; font-weight: 600;
     color: var(--agnes-text-secondary);
     margin-bottom: 12px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
-/* 比例网格 */
 .ratio-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    display: flex; flex-wrap: wrap; gap: 8px;
 }
 
 .ratio-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    padding: 10px 14px;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 6px;
+    padding: 10px 12px;
     background: #f5f5f5;
     border: 2px solid transparent;
     border-radius: var(--radius-md);
     color: var(--agnes-text-secondary);
-    font-size: 12px;
-    font-weight: 500;
+    font-size: 11px; font-weight: 500;
     cursor: pointer;
     transition: var(--transition);
-    min-width: 56px;
+    min-width: 52px;
 }
 
-.ratio-btn:hover {
-    background: #f0f0f0;
-    color: var(--agnes-text-primary);
-}
+.ratio-btn:hover { background: #f0f0f0; color: var(--agnes-text-primary); }
 
 .ratio-btn.active {
     background: #ffffff;
@@ -683,12 +617,8 @@ body {
     box-shadow: 0 2px 8px rgba(86, 171, 145, 0.15);
 }
 
-.ratio-btn svg {
-    width: 24px;
-    height: 24px;
-}
+.ratio-btn svg { width: 22px; height: 22px; }
 
-/* 分辨率组 */
 .resolution-group {
     display: flex;
     background: #f0f0f0;
@@ -700,19 +630,15 @@ body {
 .res-btn {
     flex: 1;
     padding: 12px 20px;
-    background: transparent;
-    border: none;
+    background: transparent; border: none;
     border-radius: var(--radius-sm);
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 14px; font-weight: 600;
     color: var(--agnes-text-secondary);
     cursor: pointer;
     transition: var(--transition);
 }
 
-.res-btn:hover {
-    color: var(--agnes-text-primary);
-}
+.res-btn:hover { color: var(--agnes-text-primary); }
 
 .res-btn.active {
     background: #ffffff;
@@ -720,62 +646,36 @@ body {
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
-/* 关闭按钮 */
 .settings-close {
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    width: 32px;
-    height: 32px;
-    background: #f5f5f5;
-    border: none;
+    position: absolute; top: 16px; right: 16px;
+    width: 32px; height: 32px;
+    background: #f5f5f5; border: none;
     border-radius: 50%;
     color: var(--agnes-text-secondary);
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     transition: var(--transition);
 }
 
-.settings-close:hover {
-    background: #eee;
-    color: var(--agnes-text-primary);
-}
+.settings-close:hover { background: #eee; color: var(--agnes-text-primary); }
 
-/* ===== 生成结果展示 ===== */
-.agnes-result-section {
-    width: 100%;
-    margin-top: 40px;
-    display: none;
-}
-
-.agnes-result-section.visible {
-    display: block;
-}
+/* ===== 生成结果 ===== */
+.agnes-result-section { width: 100%; margin-top: 40px; }
 
 .result-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    display: flex; align-items: center; justify-content: space-between;
     margin-bottom: 16px;
 }
 
 .result-header h3 {
-    font-size: 16px;
-    font-weight: 600;
+    font-size: 16px; font-weight: 600;
     color: var(--agnes-text-primary);
 }
 
-.result-actions {
-    display: flex;
-    gap: 8px;
-}
+.result-actions { display: flex; gap: 8px; }
 
 .result-action-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
+    display: inline-flex; align-items: center; gap: 6px;
     padding: 8px 16px;
     background: #f5f5f5;
     border: 1px solid var(--agnes-border);
@@ -795,15 +695,14 @@ body {
 .result-image-container {
     background: #ffffff;
     border: 1px solid var(--agnes-border);
-    border-radius: var(--agnes-radius-lg);
+    border-radius: var(--radius-xl);
     overflow: hidden;
     box-shadow: var(--agnes-shadow);
     text-align: center;
 }
 
 .result-image-container img {
-    max-width: 100%;
-    max-height: 600px;
+    max-width: 100%; max-height: 600px;
     object-fit: contain;
     display: block;
     margin: 0 auto;
@@ -826,193 +725,74 @@ body {
     align-items: center;
     gap: 16px;
     padding: 40px;
+    width: 100%;
 }
 
-.agnes-loading.visible {
-    display: flex;
-}
+.agnes-loading.visible { display: flex; }
 
 .loading-spinner {
-    width: 40px;
-    height: 40px;
+    width: 40px; height: 40px;
     border: 3px solid #f0f0f0;
     border-top-color: var(--agnes-green-end);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
 }
 
-.loading-text {
-    font-size: 14px;
-    color: var(--agnes-text-secondary);
-}
+.loading-text { font-size: 14px; color: var(--agnes-text-secondary); }
 
-.loading-progress {
-    width: 100%;
-    max-width: 400px;
-    background: #f0f0f0;
-    border-radius: 4px;
-    height: 4px;
-    overflow: hidden;
-}
+@keyframes spin { to { transform: rotate(360deg); } }
 
-.loading-progress-bar {
-    height: 100%;
-    background: linear-gradient(90deg, var(--agnes-green-start), var(--agnes-green-end));
-    border-radius: 4px;
-    width: 0%;
-    transition: width 0.3s ease;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
-/* ===== 最近生成（侧边列表） ===== */
-.recent-work-list {
-    position: fixed;
-    left: 72px;
-    top: 0;
-    bottom: 0;
-    width: 240px;
-    background: #ffffff;
-    border-right: 1px solid var(--agnes-border);
-    padding: 20px 12px;
-    overflow-y: auto;
-    z-index: 90;
-    transform: translateX(-100%);
+/* ===== 灯箱 ===== */
+.lightbox {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
     transition: var(--transition);
 }
 
-.recent-work-list.visible {
-    transform: translateX(0);
+.lightbox.is-open {
+    opacity: 1;
+    visibility: visible;
 }
 
-.recent-work-list h4 {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--agnes-text-secondary);
-    margin: 0 0 12px;
-    padding: 0 8px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.recent-work-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px;
-    border-radius: var(--radius-sm);
+.lightbox-close {
+    position: absolute;
+    top: 20px; right: 20px;
+    width: 40px; height: 40px;
+    background: rgba(255,255,255,0.15);
+    border: none;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 24px;
     cursor: pointer;
-    transition: var(--transition);
-    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.recent-work-item:hover {
-    background: #f5f5f5;
+.lightbox-img {
+    max-width: 90vw;
+    max-height: 80vh;
+    object-fit: contain;
+    border-radius: 8px;
 }
 
-.recent-work-thumb {
-    width: 48px;
-    height: 48px;
-    border-radius: var(--radius-sm);
-    overflow: hidden;
-    flex-shrink: 0;
+.lightbox-caption {
+    color: #fff;
+    text-align: center;
+    margin-top: 16px;
+    font-size: 14px;
+    max-width: 600px;
+    padding: 0 20px;
 }
 
-.recent-work-thumb img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.recent-work-info {
-    flex: 1;
-    min-width: 0;
-}
-
-.recent-work-title {
-    font-size: 12px;
-    color: var(--agnes-text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.recent-work-time {
-    font-size: 10px;
-    color: var(--agnes-text-placeholder);
-    margin-top: 2px;
-}
-
-/* ===== 响应式 ===== */
-@media (max-width: 768px) {
-    .agnes-sidebar {
-        display: none;
-    }
-
-    .agnes-main {
-        margin-left: 0;
-    }
-
-    .agnes-content {
-        padding: 24px 16px 60px;
-    }
-
-    .welcome-title {
-        font-size: 1.5rem;
-    }
-
-    .welcome-subtitle {
-        font-size: 1.75rem;
-    }
-
-    .welcome-visual {
-        display: none;
-    }
-
-    .card-inner {
-        padding: 16px;
-    }
-
-    .agnes-settings-panel {
-        margin: 16px;
-        max-width: calc(100% - 32px);
-    }
-
-    .ratio-btn {
-        padding: 8px 10px;
-        min-width: 48px;
-        font-size: 11px;
-    }
-
-    .topbar {
-        padding: 12px 16px;
-    }
-
-    .recent-work-list {
-        width: 200px;
-    }
-}
-
-@media (max-width: 480px) {
-    .toolbar-btn {
-        padding: 6px 8px;
-        font-size: 12px;
-    }
-
-    .toolbar-btn span.btn-text {
-        display: none;
-    }
-
-    .resolution-group .res-btn {
-        padding: 10px 12px;
-        font-size: 13px;
-    }
-}
-
-/* ===== 预览模式指示器 ===== */
+/* ===== 预览指示器 ===== */
 .preview-indicator {
     position: fixed;
     bottom: 16px;
@@ -1027,115 +807,124 @@ body {
     opacity: 0.7;
 }
 
-/* ===== 模拟推荐卡片占位 ===== */
-.rec-placeholder {
-    min-width: 200px;
-    height: 120px;
-    border-radius: var(--radius-md);
-    background: linear-gradient(135deg, #f0f0f0, #e0e0e0);
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #bbb;
-    font-size: 12px;
+/* ===== 响应式 ===== */
+@media (max-width: 768px) {
+    .agnes-content { padding: 40px 16px 60px; }
+    .welcome-title { font-size: 1.35rem; }
+    .welcome-subtitle { font-size: 1.5rem; }
+    .welcome-visual { display: none; }
+    .card-inner { padding: 14px; }
+    .agnes-settings-panel { margin: 16px; max-width: calc(100% - 32px); }
+    .ratio-btn { padding: 8px 10px; min-width: 44px; font-size: 10px; }
+    .sim-header-nav { display: none; }
+}
+
+@media (max-width: 480px) {
+    .toolbar-btn span.btn-text { display: none; }
+    .resolution-group .res-btn { padding: 10px 12px; font-size: 13px; }
 }
 </style>
 </head>
 <body>
 
+<!-- 模拟页眉 -->
+<header class="sim-header">
+    <div class="sim-header-logo">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <rect width="28" height="28" rx="8" fill="url(#logoGrad)"/>
+            <path d="M8 14C8 10.6863 10.6863 8 14 8C17.3137 8 20 10.6863 20 14" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            <path d="M14 20C10.6863 20 8 17.3137 8 14" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            <defs><linearGradient id="logoGrad" x1="0" y1="0" x2="28" y2="28"><stop stop-color="#a8e063"/><stop offset="1" stop-color="#56ab91"/></linearGradient></defs>
+        </svg>
+        <span>AIPhoto</span>
+    </div>
+    <nav class="sim-header-nav">
+        <a href="#" class="nav-active">首页</a>
+        <a href="#">画廊</a>
+        <a href="#">视频</a>
+    </nav>
+    <div class="sim-header-right">
+        <div class="credits-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M8 10h8M8 14h8"/></svg>
+            66
+        </div>
+        <button class="upgrade-btn">升级</button>
+        <div class="avatar-circle">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+    </div>
+</header>
+
 <!-- 全局背景 -->
 <div class="agnes-global-bg"></div>
 
-<!-- 预览模式指示 -->
-<div class="preview-indicator">🎨 布局预览模式 — 仅展示 UI</div>
+<!-- 预览指示器 -->
+<div class="preview-indicator">🎨 布局预览 — 仅展示 UI</div>
 
 <!-- App 容器 -->
 <div class="agnes-app">
 
-    <!-- 左侧导航栏 -->
-    <aside class="agnes-sidebar">
-        <div class="sidebar-logo">
-            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                <rect width="28" height="28" rx="8" fill="url(#logoGrad)"/>
-                <path d="M8 14C8 10.6863 10.6863 8 14 8C17.3137 8 20 10.6863 20 14" stroke="white" stroke-width="2" stroke-linecap="round"/>
-                <path d="M14 20C10.6863 20 8 17.3137 8 14" stroke="white" stroke-width="2" stroke-linecap="round"/>
-                <defs>
-                    <linearGradient id="logoGrad" x1="0" y1="0" x2="28" y2="28">
-                        <stop stop-color="#a8e063"/>
-                        <stop offset="1" stop-color="#56ab91"/>
-                    </linearGradient>
-                </defs>
-            </svg>
+    <!-- 左侧作品列表（输入后显示） -->
+    <aside class="agnes-recent-sidebar" id="agnesRecentSidebar">
+        <div class="recent-sidebar-header">
+            <button class="new-work-btn" id="newWorkBtn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 5v14M5 12h14"/>
+                </svg>
+                新作品
+            </button>
+            <button class="sidebar-collapse-btn" id="sidebarCollapse">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
         </div>
-
-        <nav class="sidebar-nav">
-            <a class="sidebar-nav-item active" data-nav="generate">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
-                </svg>
-                <span>灵感</span>
-            </a>
-            <a class="sidebar-nav-item" data-nav="works">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                </svg>
-                <span>作品</span>
-            </a>
-            <a class="sidebar-nav-item" data-nav="assets">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                </svg>
-                <span>资产</span>
-            </a>
-        </nav>
-
-        <div class="sidebar-bottom">
-            <a class="sidebar-nav-item" data-nav="history">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                </svg>
-                <span>历史</span>
-            </a>
-            <a class="sidebar-nav-item" data-nav="settings">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-                </svg>
-                <span>设置</span>
-            </a>
+        <div class="recent-list" id="recentList">
+            <div class="recent-item" data-full="" data-prompt="夕阳下的宁静湖面">
+                <div class="recent-thumb" style="background:linear-gradient(135deg,#ffecd2,#fcb69f);"></div>
+                <div class="recent-info">
+                    <div class="recent-title">夕阳下的宁静湖面</div>
+                    <div class="recent-prompt">夕阳下的宁静湖面，群山倒影...</div>
+                </div>
+            </div>
+            <div class="recent-item" data-full="" data-prompt="赛博朋克城市夜景">
+                <div class="recent-thumb" style="background:linear-gradient(135deg,#a18cd1,#fbc2eb);"></div>
+                <div class="recent-info">
+                    <div class="recent-title">赛博朋克城市夜景</div>
+                    <div class="recent-prompt">霓虹灯闪烁的未来都市...</div>
+                </div>
+            </div>
+            <div class="recent-item" data-full="" data-prompt="水彩风格花园">
+                <div class="recent-thumb" style="background:linear-gradient(135deg,#84fab0,#8fd3f4);"></div>
+                <div class="recent-info">
+                    <div class="recent-title">水彩风格花园</div>
+                    <div class="recent-prompt">春日花园，水彩画风...</div>
+                </div>
+            </div>
+            <div class="recent-item" data-full="" data-prompt="3D渲染机器人">
+                <div class="recent-thumb" style="background:linear-gradient(135deg,#cfd9df,#e2ebf0);"></div>
+                <div class="recent-info">
+                    <div class="recent-title">3D渲染机器人</div>
+                    <div class="recent-prompt">未来科技，Octane渲染...</div>
+                </div>
+            </div>
+            <div class="recent-item" data-full="" data-prompt="古风仕女图">
+                <div class="recent-thumb" style="background:linear-gradient(135deg,#f5f7fa,#c3cfe2);"></div>
+                <div class="recent-info">
+                    <div class="recent-title">古风仕女图</div>
+                    <div class="recent-prompt">传统中国风，汉服仕女...</div>
+                </div>
+            </div>
+            <div class="recent-item" data-full="" data-prompt="动漫风格少女">
+                <div class="recent-thumb" style="background:linear-gradient(135deg,#e0c3fc,#8ec5fc);"></div>
+                <div class="recent-info">
+                    <div class="recent-title">动漫风格少女</div>
+                    <div class="recent-prompt">日系动漫，赛璐璐上色...</div>
+                </div>
+            </div>
         </div>
     </aside>
 
     <!-- 主内容区 -->
     <main class="agnes-main">
-
-        <!-- 顶栏 -->
-        <header class="agnes-topbar">
-            <div class="topbar-left">
-                <button class="new-work-btn" id="newWorkBtn" style="display:none;">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 5v14M5 12h14"/>
-                    </svg>
-                    新作品
-                </button>
-            </div>
-            <div class="topbar-right">
-                <div class="credits-badge">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"/><path d="M12 6v12M8 10h8M8 14h8"/>
-                    </svg>
-                    <span>66</span>
-                </div>
-                <button class="upgrade-btn">升级</button>
-                <div class="avatar-circle">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-                    </svg>
-                </div>
-            </div>
-        </header>
-
-        <!-- 内容区 -->
         <div class="agnes-content" id="agnesContent">
 
             <!-- 欢迎态 -->
@@ -1163,42 +952,30 @@ body {
                     </div>
 
                     <!-- 文本输入 -->
-                    <textarea
-                        class="card-textarea"
-                        id="agnesPrompt"
-                        rows="1"
-                        placeholder="上传参考素材、输入文字，请描述你想生成的图片"
-                    ></textarea>
+                    <textarea class="card-textarea" id="agnesPrompt" rows="1" placeholder="上传参考素材、输入文字，请描述你想生成的图片"></textarea>
 
                     <!-- 底部工具栏 -->
                     <div class="card-toolbar">
-                        <!-- 模式选择 -->
                         <div class="toolbar-group">
-                            <button type="button" class="toolbar-btn toolbar-btn--dropdown" id="modeDropdownBtn">
+                            <button type="button" class="toolbar-btn toolbar-btn--dropdown">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
                                 </svg>
                                 图片生成
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polyline points="6 9 12 15 18 9"/>
-                                </svg>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
                             </button>
                         </div>
 
-                        <!-- 模型选择 -->
                         <div class="toolbar-group">
-                            <button type="button" class="toolbar-btn toolbar-btn--model" id="modelDropdownBtn">
+                            <button type="button" class="toolbar-btn toolbar-btn--model">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
                                 </svg>
                                 Agnes Image 2.1 Flash
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polyline points="6 9 12 15 18 9"/>
-                                </svg>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
                             </button>
                         </div>
 
-                        <!-- 设置 -->
                         <div class="toolbar-group">
                             <button type="button" class="toolbar-btn toolbar-btn--settings" id="settingsBtn">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1208,12 +985,10 @@ body {
                             </button>
                         </div>
 
-                        <!-- @符号 -->
                         <div class="toolbar-group">
                             <button type="button" class="toolbar-btn toolbar-btn--at">@</button>
                         </div>
 
-                        <!-- 右侧：积分 + 发送 -->
                         <div class="toolbar-right">
                             <div class="credits-small">
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a8e063" stroke-width="2">
@@ -1243,16 +1018,21 @@ body {
             <!-- 底部推荐卡片 -->
             <div class="agnes-recommended" id="recommendedSection" style="display:none;">
                 <div class="rec-scroll" id="recScroll">
-                    <div class="rec-placeholder">推荐 1</div>
-                    <div class="rec-placeholder">推荐 2</div>
-                    <div class="rec-placeholder">推荐 3</div>
-                    <div class="rec-placeholder">推荐 4</div>
-                    <div class="rec-placeholder">推荐 5</div>
+                    <div class="rec-card"><div style="width:100%;height:100%;background:linear-gradient(135deg,#ffecd2,#fcb69f);display:flex;align-items:center;justify-content:center;color:#c48;font-size:13px;">风景</div></div>
+                    <div class="rec-card"><div style="width:100%;height:100%;background:linear-gradient(135deg,#a18cd1,#fbc2eb);display:flex;align-items:center;justify-content:center;color:#c48;font-size:13px;">人像</div></div>
+                    <div class="rec-card"><div style="width:100%;height:100%;background:linear-gradient(135deg,#84fab0,#8fd3f4);display:flex;align-items:center;justify-content:center;color:#c48;font-size:13px;">插画</div></div>
+                    <div class="rec-card"><div style="width:100%;height:100%;background:linear-gradient(135deg,#fbc2eb,#a6c1ee);display:flex;align-items:center;justify-content:center;color:#c48;font-size:13px;">建筑</div></div>
+                    <div class="rec-card"><div style="width:100%;height:100%;background:linear-gradient(135deg,#ffecd2,#c2e9fb);display:flex;align-items:center;justify-content:center;color:#c48;font-size:13px;">抽象</div></div>
+                    <div class="rec-card"><div style="width:100%;height:100%;background:linear-gradient(135deg,#d4fc79,#96e6a1);display:flex;align-items:center;justify-content:center;color:#c48;font-size:13px;">动物</div></div>
+                    <div class="rec-card"><div style="width:100%;height:100%;background:linear-gradient(135deg,#f6d365,#fda085);display:flex;align-items:center;justify-content:center;color:#c48;font-size:13px;">食物</div></div>
+                    <div class="rec-card"><div style="width:100%;height:100%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;">科技</div></div>
                 </div>
             </div>
 
-        </div><!-- /agnes-content -->
+            <!-- 生成结果 -->
+            <div class="agnes-result-section" id="resultSection" style="display:none;"></div>
 
+        </div><!-- /agnes-content -->
     </main>
 </div><!-- /agnes-app -->
 
@@ -1260,53 +1040,23 @@ body {
 <div class="agnes-settings-overlay" id="settingsOverlay" style="display:none;">
     <div class="agnes-settings-panel">
         <h3 class="settings-title">设置</h3>
-
-        <!-- 比例选择 -->
         <div class="settings-section">
             <label class="settings-label">比例</label>
             <div class="ratio-grid" id="ratioGrid">
                 <button type="button" class="ratio-btn active" data-ratio="auto">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
-                    </svg>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                     Auto
                 </button>
-                <button type="button" class="ratio-btn" data-ratio="1:1">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-                    1:1
-                </button>
-                <button type="button" class="ratio-btn" data-ratio="3:4">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="3" width="14" height="18" rx="2"/></svg>
-                    3:4
-                </button>
-                <button type="button" class="ratio-btn" data-ratio="4:3">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/></svg>
-                    4:3
-                </button>
-                <button type="button" class="ratio-btn" data-ratio="16:9">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/></svg>
-                    16:9
-                </button>
-                <button type="button" class="ratio-btn" data-ratio="9:16">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="2"/></svg>
-                    9:16
-                </button>
-                <button type="button" class="ratio-btn" data-ratio="2:3">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="20" rx="2"/></svg>
-                    2:3
-                </button>
-                <button type="button" class="ratio-btn" data-ratio="3:2">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/></svg>
-                    3:2
-                </button>
-                <button type="button" class="ratio-btn" data-ratio="21:9">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="7" width="22" height="10" rx="2"/></svg>
-                    21:9
-                </button>
+                <button type="button" class="ratio-btn" data-ratio="1:1"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>1:1</button>
+                <button type="button" class="ratio-btn" data-ratio="3:4"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="3" width="14" height="18" rx="2"/></svg>3:4</button>
+                <button type="button" class="ratio-btn" data-ratio="4:3"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/></svg>4:3</button>
+                <button type="button" class="ratio-btn" data-ratio="16:9"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/></svg>16:9</button>
+                <button type="button" class="ratio-btn" data-ratio="9:16"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="2"/></svg>9:16</button>
+                <button type="button" class="ratio-btn" data-ratio="2:3"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="20" rx="2"/></svg>2:3</button>
+                <button type="button" class="ratio-btn" data-ratio="3:2"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/></svg>3:2</button>
+                <button type="button" class="ratio-btn" data-ratio="21:9"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="7" width="22" height="10" rx="2"/></svg>21:9</button>
             </div>
         </div>
-
-        <!-- 分辨率选择 -->
         <div class="settings-section">
             <label class="settings-label">分辨率</label>
             <div class="resolution-group" id="resolutionGroup">
@@ -1315,8 +1065,6 @@ body {
                 <button type="button" class="res-btn" data-res="4K">4K</button>
             </div>
         </div>
-
-        <!-- 关闭按钮 -->
         <button type="button" class="settings-close" id="settingsClose">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
@@ -1324,7 +1072,6 @@ body {
 </div>
 
 <script>
-// ===== 预览模式交互脚本 =====
 (function() {
     'use strict';
 
@@ -1332,7 +1079,8 @@ body {
         hasInput: false,
         selectedRatio: 'auto',
         selectedResolution: '1K',
-        uploadedImages: []
+        uploadedImages: [],
+        sidebarVisible: false
     };
 
     var promptInput = document.getElementById('agnesPrompt');
@@ -1340,7 +1088,7 @@ body {
     var cardEl = document.getElementById('agnesCard');
     var discoverTabs = document.getElementById('discoverTabs');
     var recSection = document.getElementById('recommendedSection');
-    var newWorkBtn = document.getElementById('newWorkBtn');
+    var sidebar = document.getElementById('agnesRecentSidebar');
     var sendBtn = document.getElementById('sendBtn');
 
     // 输入变化
@@ -1354,8 +1102,11 @@ body {
                 cardEl.classList.add('visible');
                 if (discoverTabs) discoverTabs.style.display = 'flex';
                 if (recSection) recSection.style.display = 'block';
-                if (newWorkBtn) newWorkBtn.style.display = 'inline-flex';
                 state.hasInput = true;
+            }
+            if (sidebar && !state.sidebarVisible) {
+                sidebar.classList.add('visible');
+                state.sidebarVisible = true;
             }
         } else {
             if (state.hasInput && state.uploadedImages.length === 0) {
@@ -1363,8 +1114,11 @@ body {
                 cardEl.classList.remove('visible');
                 if (discoverTabs) discoverTabs.style.display = 'none';
                 if (recSection) recSection.style.display = 'none';
-                if (newWorkBtn) newWorkBtn.style.display = 'none';
                 state.hasInput = false;
+            }
+            if (sidebar && state.sidebarVisible) {
+                sidebar.classList.remove('visible');
+                state.sidebarVisible = false;
             }
         }
 
@@ -1372,6 +1126,7 @@ body {
     });
 
     // 新作品
+    var newWorkBtn = document.getElementById('newWorkBtn');
     if (newWorkBtn) {
         newWorkBtn.addEventListener('click', function() {
             promptInput.value = '';
@@ -1379,6 +1134,15 @@ body {
             renderUploadPreviews();
             promptInput.dispatchEvent(new Event('input'));
             promptInput.focus();
+        });
+    }
+
+    // 侧边栏收起
+    var collapseBtn = document.getElementById('sidebarCollapse');
+    if (collapseBtn) {
+        collapseBtn.addEventListener('click', function() {
+            sidebar.classList.remove('visible');
+            state.sidebarVisible = false;
         });
     }
 
@@ -1400,17 +1164,13 @@ body {
     if (settingsBtn) {
         settingsBtn.addEventListener('click', function() {
             overlay.style.display = 'flex';
-            requestAnimationFrame(function() {
-                overlay.classList.add('open');
-            });
+            requestAnimationFrame(function() { overlay.classList.add('open'); });
         });
     }
 
     function closeSettings() {
         overlay.classList.remove('open');
-        setTimeout(function() {
-            overlay.style.display = 'none';
-        }, 250);
+        setTimeout(function() { overlay.style.display = 'none'; }, 250);
     }
 
     if (closeBtn) closeBtn.addEventListener('click', closeSettings);
@@ -1421,9 +1181,7 @@ body {
     }
 
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && overlay.classList.contains('open')) {
-            closeSettings();
-        }
+        if (e.key === 'Escape' && overlay.classList.contains('open')) closeSettings();
     });
 
     if (ratioGrid) {
@@ -1451,10 +1209,7 @@ body {
     var fileInput = document.getElementById('fileInput');
 
     if (uploadBtn && fileInput) {
-        uploadBtn.addEventListener('click', function() {
-            fileInput.click();
-        });
-
+        uploadBtn.addEventListener('click', function() { fileInput.click(); });
         fileInput.addEventListener('change', function() {
             var files = Array.from(this.files);
             files.forEach(function(file) {
@@ -1464,9 +1219,7 @@ body {
                     state.uploadedImages.push(e.target.result);
                     renderUploadPreviews();
                     var pi = document.getElementById('agnesPrompt');
-                    if (pi && !state.hasInput) {
-                        pi.dispatchEvent(new Event('input'));
-                    }
+                    if (pi && !state.hasInput) pi.dispatchEvent(new Event('input'));
                 };
                 reader.readAsDataURL(file);
             });
@@ -1495,10 +1248,10 @@ body {
         });
     }
 
-    // 发送按钮点击（预览模式模拟）
+    // 发送
     sendBtn.addEventListener('click', function() {
         if (!this.classList.contains('active')) return;
-        alert('🎨 预览模式：布局已展示，功能需部署到 WordPress 后测试。\n\n当前提示词：' + (promptInput.value.trim() || '(无)') + '\n比例：' + state.selectedRatio + '\n分辨率：' + state.selectedResolution);
+        alert('🎨 预览模式：布局已展示，功能需部署到 WordPress 后测试。\n\n提示词：' + (promptInput.value.trim() || '(无)') + '\n比例：' + state.selectedRatio + '\n分辨率：' + state.selectedResolution);
     });
 
     // Enter 发送
@@ -1509,13 +1262,10 @@ body {
         }
     });
 
-    // 侧边栏切换
-    document.querySelectorAll('.sidebar-nav-item').forEach(function(item) {
-        item.addEventListener('click', function(e) {
-            e.preventDefault();
-            document.querySelectorAll('.sidebar-nav-item').forEach(function(i) { i.classList.remove('active'); });
-            this.classList.add('active');
-        });
+    // 文本框自适应
+    promptInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 180) + 'px';
     });
 
     // 发现 Tabs
@@ -1523,6 +1273,17 @@ body {
         tab.addEventListener('click', function() {
             document.querySelectorAll('.discover-tab').forEach(function(t) { t.classList.remove('active'); });
             this.classList.add('active');
+        });
+    });
+
+    // 侧边栏作品点击
+    document.querySelectorAll('.recent-item').forEach(function(item) {
+        item.addEventListener('click', function() {
+            var prompt = this.getAttribute('data-prompt');
+            if (prompt) {
+                promptInput.value = prompt;
+                promptInput.dispatchEvent(new Event('input'));
+            }
         });
     });
 

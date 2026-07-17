@@ -658,8 +658,14 @@ html, body.chat-page {
     display: flex;
     flex-direction: column;
     align-items: center;
-    background: linear-gradient(to top, rgba(255,255,255,1) 60%, rgba(255,255,255,0.8) 80%, rgba(255,255,255,0) 100%);
+    background: #fff;
+    border-top: 1px solid #f3f4f6;
     z-index: 5;
+}
+
+/* 输入框白色+阴影 */
+.chat-input-container {
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
 }
 
 .chat-input-container {
@@ -1005,25 +1011,10 @@ html, body.chat-page {
         <!-- 顶部半透明遮罩 -->
         <div class="chat-scroll-fade" id="scrollFade"></div>
         <div class="chat-messages" id="chatMessages">
-            <!-- 欢迎界面 -->
-            <div class="chat-welcome" id="chatWelcome">
-                <h2 class="chat-welcome-title">
-                    <span class="chat-welcome-gradient">欢迎</span>
-                    我能为您做什么？
-                </h2>
-            </div>
+            <!-- 欢迎界面（内容由 getWelcomeHTML 动态生成） -->
         </div>
 
-        <!-- 欢迎语下方快捷标签 -->
-        <div class="chat-welcome-tags" id="chatWelcomeTags">
-            <button class="chat-tag" data-prompt="帮我制作一个 AI 幻灯片">AI 幻灯片</button>
-            <button class="chat-tag" data-prompt="帮我创建一个网站">创建网站</button>
-            <button class="chat-tag" data-prompt="帮我做 AI 设计">AI 设计</button>
-            <button class="chat-tag" data-prompt="帮我做 AI 表格">AI 表格</button>
-            <button class="chat-tag chat-tag-more">更多</button>
-        </div>
-
-        <!-- 滚动按钮（固定在输入框上方，聊天区中间） -->
+        <!-- 滚动按钮（悬浮在输入框上方） -->
         <div id="scrollBtnWrap" style="display:none;text-align:center;padding:4px 0;">
             <button class="chat-scroll-btn-fixed" id="scrollBtn">
                 <svg class="arrow-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -1116,10 +1107,13 @@ html, body.chat-page {
         isGenerating = on;
         var iconSend = chatSendBtn.querySelector('.icon-send');
         var iconStop = chatSendBtn.querySelector('.icon-stop');
+        var welcomeTags = document.getElementById('chatWelcomeTags');
         if (on) {
             if (iconSend) iconSend.style.display = 'none';
             if (iconStop) iconStop.style.display = 'block';
             chatSendBtn.disabled = false;
+            // 隐藏欢迎标签
+            if (welcomeTags) welcomeTags.style.display = 'none';
         } else {
             if (iconSend) iconSend.style.display = 'block';
             if (iconStop) iconStop.style.display = 'none';
@@ -1628,6 +1622,13 @@ html, body.chat-page {
             '<span class="chat-welcome-gradient">欢迎</span>' +
             ' 我能为您做什么？' +
             '</h2>' +
+            '<div class="chat-welcome-tags" id="chatWelcomeTags">' +
+            '<button class="chat-tag" data-prompt="帮我制作一个 AI 幻灯片">AI 幻灯片</button>' +
+            '<button class="chat-tag" data-prompt="帮我创建一个网站">创建网站</button>' +
+            '<button class="chat-tag" data-prompt="帮我做 AI 设计">AI 设计</button>' +
+            '<button class="chat-tag" data-prompt="帮我做 AI 表格">AI 表格</button>' +
+            '<button class="chat-tag chat-tag-more">更多</button>' +
+            '</div>' +
             '</div>';
     }
 

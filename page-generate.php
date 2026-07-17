@@ -7,119 +7,86 @@
 get_header();
 
 $settings = aiphoto_get_settings();
+
+// 最近生成数据（PHP 注入给 JS）
+$recent_imgs = new WP_Query( array(
+    'post_type'      => 'attachment',
+    'post_status'    => 'inherit',
+    'post_mime_type' => 'image',
+    'posts_per_page' => 6,
+    'orderby'        => 'date',
+    'order'          => 'DESC',
+    'fields'         => 'ids',
+) );
+$recent_data = array();
+if ( $recent_imgs->have_posts() ) :
+    foreach ( $recent_imgs->posts as $aid ) :
+        $tu = wp_get_attachment_image_src( $aid, 'medium' );
+        $fu = wp_get_attachment_image_src( $aid, 'full' );
+        $tt = get_the_title( $aid );
+        $up = get_post_meta( $aid, '_aiphoto_user_prompt', true ) ?: get_post_meta( $aid, '_aiphoto_prompt', true );
+        $recent_data[] = array(
+            'thumb' => $tu[0] ?? '',
+            'full'  => $fu[0] ?? '',
+            'title' => $tt ?: 'AI 图片',
+            'prompt'=> $up,
+        );
+    endforeach;
+endif;
+wp_reset_postdata();
 ?>
 
-<style>
-/* ===== Agnes 风格内联基础变量 ===== */
-:root {
-    --agnes-green-start: #a8e063;
-    --agnes-green-end: #56ab91;
-    --agnes-yellow: #f9d423;
-    --agnes-bg: #ffffff;
-    --agnes-card-bg: #ffffff;
-    --agnes-text-primary: #1a1a1a;
-    --agnes-text-secondary: #8c8c8c;
-    --agnes-text-placeholder: #bfbfbf;
-    --agnes-border: #eeeeee;
-    --agnes-shadow: 0 2px 20px rgba(0,0,0,0.06);
-    --agnes-shadow-hover: 0 4px 30px rgba(0,0,0,0.1);
-    --agnes-radius-lg: 20px;
-    --agnes-radius-md: 12px;
-    --agnes-radius-sm: 8px;
-    --agnes-transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-</style>
+<?php if ( empty( $settings['api_key'] ) ) : ?>
+<div class="api-warning" role="alert">
+    <?php
+    printf(
+        esc_html__( 'API 尚未配置。请%s开始使用。', 'aiphoto' ),
+        '<a href="' . esc_url( admin_url( 'admin.php?page=aiphoto-settings' ) ) . '">' . esc_html__( '前往设置', 'aiphoto' ) . '</a>'
+    );
+    ?>
+</div>
+<?php endif; ?>
 
-<!-- 全局背景渐变 -->
+<!-- 全局背景 -->
 <div class="agnes-global-bg"></div>
 
 <!-- 主容器 -->
 <div class="agnes-app" id="agnesApp">
 
-    <!-- 左侧导航栏 -->
-    <aside class="agnes-sidebar" id="agnesSidebar">
-        <div class="sidebar-logo">
-            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                <rect width="28" height="28" rx="8" fill="url(#logoGrad)"/>
-                <path d="M8 14C8 10.6863 10.6863 8 14 8C17.3137 8 20 10.6863 20 14" stroke="white" stroke-width="2" stroke-linecap="round"/>
-                <path d="M14 20C10.6863 20 8 17.3137 8 14" stroke="white" stroke-width="2" stroke-linecap="round"/>
-                <defs>
-                    <linearGradient id="logoGrad" x1="0" y1="0" x2="28" y2="28">
-                        <stop stop-color="#a8e063"/>
-                        <stop offset="1" stop-color="#56ab91"/>
-                    </linearGradient>
-                </defs>
-            </svg>
+    <!-- 左侧作品列表（输入后显示） -->
+    <aside class="agnes-recent-sidebar" id="agnesRecentSidebar" style="display:none;">
+        <div class="recent-sidebar-header">
+            <button class="new-work-btn" id="newWorkBtn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 5v14M5 12h14"/>
+                </svg>
+                新作品
+            </button>
+            <button class="sidebar-collapse-btn" id="sidebarCollapse">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
         </div>
-
-        <nav class="sidebar-nav">
-            <a href="#" class="sidebar-nav-item active" data-nav="generate">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
-                </svg>
-                <span>灵感</span>
-            </a>
-            <a href="#" class="sidebar-nav-item" data-nav="works">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                </svg>
-                <span>作品</span>
-            </a>
-            <a href="#" class="sidebar-nav-item" data-nav="assets">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                </svg>
-                <span>资产</span>
-            </a>
-        </nav>
-
-        <div class="sidebar-bottom">
-            <a href="#" class="sidebar-nav-item" data-nav="history">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                </svg>
-                <span>历史</span>
-            </a>
-            <a href="#" class="sidebar-nav-item" data-nav="settings">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-                </svg>
-                <span>设置</span>
-            </a>
+        <div class="recent-list" id="recentList">
+            <?php if ( ! empty( $recent_data ) ) : ?>
+                <?php foreach ( $recent_data as $r ) : ?>
+                <div class="recent-item" data-full="<?php echo esc_url( $r['full'] ); ?>" data-prompt="<?php echo esc_attr( $r['prompt'] ); ?>">
+                    <div class="recent-thumb">
+                        <?php if ( ! empty( $r['thumb'] ) ) : ?>
+                            <img src="<?php echo esc_url( $r['thumb'] ); ?>" alt="<?php echo esc_attr( $r['title'] ); ?>" loading="lazy">
+                        <?php endif; ?>
+                    </div>
+                    <div class="recent-info">
+                        <div class="recent-title"><?php echo esc_html( $r['title'] ); ?></div>
+                        <div class="recent-prompt"><?php echo esc_html( mb_substr( $r['prompt'], 0, 30 ) ); ?></div>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
         </div>
     </aside>
 
     <!-- 主内容区 -->
     <main class="agnes-main">
-
-        <!-- 顶栏 -->
-        <header class="agnes-topbar">
-            <div class="topbar-left">
-                <!-- 新建作品按钮（输入后显示） -->
-                <button class="new-work-btn" id="newWorkBtn" style="display:none;">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 5v14M5 12h14"/>
-                    </svg>
-                    新作品
-                </button>
-            </div>
-            <div class="topbar-right">
-                <div class="credits-badge">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"/><path d="M12 6v12M8 10h8M8 14h8"/>
-                    </svg>
-                    <span>66</span>
-                </div>
-                <button class="upgrade-btn">升级</button>
-                <div class="avatar-circle">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-                    </svg>
-                </div>
-            </div>
-        </header>
-
-        <!-- 欢迎页 / 生成页 容器 -->
         <div class="agnes-content" id="agnesContent">
 
             <!-- 欢迎态（未输入时显示） -->
@@ -135,7 +102,7 @@ $settings = aiphoto_get_settings();
                 </div>
             </div>
 
-            <!-- 生成器卡片（输入区域） -->
+            <!-- 生成器卡片 -->
             <div class="agnes-generator-card" id="agnesCard">
                 <div class="card-inner">
 
@@ -215,8 +182,8 @@ $settings = aiphoto_get_settings();
                 </div>
             </div>
 
-            <!-- 底部发现/短剧 Tabs（保留占位） -->
-            <div class="agnes-discover-tabs" id="discoverTabs">
+            <!-- 底部发现 Tabs -->
+            <div class="agnes-discover-tabs" id="discoverTabs" style="display:none;">
                 <div class="discover-tabs-inner">
                     <button class="discover-tab" data-tab="discover">发现</button>
                     <button class="discover-tab active" data-tab="short">短剧</button>
@@ -224,15 +191,17 @@ $settings = aiphoto_get_settings();
                 <a href="#" class="discover-upload">上传短剧</a>
             </div>
 
-            <!-- 底部推荐卡片（保留占位） -->
-            <div class="agnes-recommended" id="recommendedSection">
+            <!-- 底部推荐卡片 -->
+            <div class="agnes-recommended" id="recommendedSection" style="display:none;">
                 <div class="rec-scroll" id="recScroll">
                     <!-- JS 动态填充 -->
                 </div>
             </div>
 
-        </div><!-- /agnes-content -->
+            <!-- 生成结果 -->
+            <div class="agnes-result-section" id="resultSection" style="display:none;"></div>
 
+        </div><!-- /agnes-content -->
     </main>
 </div><!-- /agnes-app -->
 

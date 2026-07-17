@@ -12,8 +12,9 @@
         initTextareaAutoResize();
         initSendButton();
         initDiscoverTabs();
-        initThemeToggle();
-        initRecentWorks();
+        initSidebar();
+        initRecCards();
+        initLightbox();
     });
 
     // ==================== 核心状态 ====================
@@ -23,7 +24,7 @@
         selectedRatio: 'auto',
         selectedResolution: '1K',
         uploadedImages: [],
-        currentTemplate: ''
+        sidebarVisible: false
     };
 
     // ==================== 生成器流程 ====================
@@ -31,9 +32,9 @@
         var promptInput = document.getElementById('agnesPrompt');
         var welcomeEl = document.getElementById('agnesWelcome');
         var cardEl = document.getElementById('agnesCard');
-        var contentEl = document.getElementById('agnesContent');
-        var recSection = document.getElementById('recommendedSection');
         var discoverTabs = document.getElementById('discoverTabs');
+        var recSection = document.getElementById('recommendedSection');
+        var sidebar = document.getElementById('agnesRecentSidebar');
         var newWorkBtn = document.getElementById('newWorkBtn');
 
         // 监听输入变化
@@ -43,27 +44,32 @@
 
             if (hasText || hasImages) {
                 if (!state.hasInput) {
-                    // 首次输入：隐藏欢迎，显示卡片
                     welcomeEl.style.display = 'none';
                     cardEl.classList.add('visible');
                     if (discoverTabs) discoverTabs.style.display = 'flex';
                     if (recSection) recSection.style.display = 'block';
-                    if (newWorkBtn) newWorkBtn.style.display = 'inline-flex';
                     state.hasInput = true;
+                }
+                // 显示侧边栏
+                if (sidebar && !state.sidebarVisible) {
+                    sidebar.classList.add('visible');
+                    state.sidebarVisible = true;
                 }
             } else {
                 if (state.hasInput && state.uploadedImages.length === 0) {
-                    // 清空输入：恢复欢迎态
                     welcomeEl.style.display = '';
                     cardEl.classList.remove('visible');
                     if (discoverTabs) discoverTabs.style.display = 'none';
                     if (recSection) recSection.style.display = 'none';
-                    if (newWorkBtn) newWorkBtn.style.display = 'none';
                     state.hasInput = false;
+                }
+                // 隐藏侧边栏
+                if (sidebar && state.sidebarVisible) {
+                    sidebar.classList.remove('visible');
+                    state.sidebarVisible = false;
                 }
             }
 
-            // 更新发送按钮状态
             updateSendButton();
         });
 
@@ -79,6 +85,34 @@
         }
     }
 
+    // ==================== 侧边栏 ====================
+    function initSidebar() {
+        var sidebar = document.getElementById('agnesRecentSidebar');
+        var collapseBtn = document.getElementById('sidebarCollapse');
+        if (!collapseBtn) return;
+
+        collapseBtn.addEventListener('click', function() {
+            sidebar.classList.remove('visible');
+            state.sidebarVisible = false;
+        });
+
+        // 点击侧边栏作品
+        if (sidebar) {
+            sidebar.addEventListener('click', function(e) {
+                var item = e.target.closest('.recent-item');
+                if (!item) return;
+                var prompt = item.getAttribute('data-prompt');
+                if (prompt) {
+                    var input = document.getElementById('agnesPrompt');
+                    if (input) {
+                        input.value = prompt;
+                        input.dispatchEvent(new Event('input'));
+                    }
+                }
+            });
+        }
+    }
+
     // ==================== 设置面板 ====================
     function initSettingsPanel() {
         var settingsBtn = document.getElementById('settingsBtn');
@@ -87,18 +121,15 @@
         var ratioGrid = document.getElementById('ratioGrid');
         var resGroup = document.getElementById('resolutionGroup');
 
-        // 打开设置
         if (settingsBtn) {
             settingsBtn.addEventListener('click', function() {
                 overlay.style.display = 'flex';
-                // 强制重排后添加 open 类以触发动画
                 requestAnimationFrame(function() {
                     overlay.classList.add('open');
                 });
             });
         }
 
-        // 关闭设置
         function closeSettings() {
             overlay.classList.remove('open');
             setTimeout(function() {
@@ -106,46 +137,34 @@
             }, 250);
         }
 
-        if (closeBtn) {
-            closeBtn.addEventListener('click', closeSettings);
-        }
-
+        if (closeBtn) closeBtn.addEventListener('click', closeSettings);
         if (overlay) {
             overlay.addEventListener('click', function(e) {
                 if (e.target === overlay) closeSettings();
             });
         }
 
-        // ESC 关闭
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape' && overlay.classList.contains('open')) {
                 closeSettings();
             }
         });
 
-        // 比例选择
         if (ratioGrid) {
             ratioGrid.addEventListener('click', function(e) {
                 var btn = e.target.closest('.ratio-btn');
                 if (!btn) return;
-
-                ratioGrid.querySelectorAll('.ratio-btn').forEach(function(b) {
-                    b.classList.remove('active');
-                });
+                ratioGrid.querySelectorAll('.ratio-btn').forEach(function(b) { b.classList.remove('active'); });
                 btn.classList.add('active');
                 state.selectedRatio = btn.getAttribute('data-ratio');
             });
         }
 
-        // 分辨率选择
         if (resGroup) {
             resGroup.addEventListener('click', function(e) {
                 var btn = e.target.closest('.res-btn');
                 if (!btn) return;
-
-                resGroup.querySelectorAll('.res-btn').forEach(function(b) {
-                    b.classList.remove('active');
-                });
+                resGroup.querySelectorAll('.res-btn').forEach(function(b) { b.classList.remove('active'); });
                 btn.classList.add('active');
                 state.selectedResolution = btn.getAttribute('data-res');
             });
@@ -156,7 +175,6 @@
     function initUploadArea() {
         var uploadBtn = document.getElementById('uploadPlusBtn');
         var fileInput = document.getElementById('fileInput');
-        var cardUploadArea = document.getElementById('cardUploadArea');
 
         if (!uploadBtn || !fileInput) return;
 
@@ -172,7 +190,6 @@
                 reader.onload = function(e) {
                     state.uploadedImages.push(e.target.result);
                     renderUploadPreviews();
-                    // 触发输入事件以显示卡片
                     var promptInput = document.getElementById('agnesPrompt');
                     if (promptInput && !state.hasInput) {
                         promptInput.dispatchEvent(new Event('input'));
@@ -187,28 +204,20 @@
     function renderUploadPreviews() {
         var container = document.getElementById('uploadPreviews');
         if (!container) return;
-
         container.innerHTML = '';
         state.uploadedImages.forEach(function(src, idx) {
             var div = document.createElement('div');
             div.className = 'upload-preview-item';
-            div.innerHTML = '<img src="' + src + '" alt="参考图">' +
-                '<button type="button" class="upload-preview-remove" data-idx="' + idx + '">✕</button>';
+            div.innerHTML = '<img src="' + src + '" alt="参考图"><button type="button" class="upload-preview-remove" data-idx="' + idx + '">✕</button>';
             container.appendChild(div);
         });
-
-        // 绑定删除
         container.querySelectorAll('.upload-preview-remove').forEach(function(btn) {
             btn.addEventListener('click', function(e) {
                 e.stopPropagation();
-                var idx = parseInt(this.getAttribute('data-idx'));
-                state.uploadedImages.splice(idx, 1);
+                state.uploadedImages.splice(parseInt(this.getAttribute('data-idx')), 1);
                 renderUploadPreviews();
-                // 触发输入事件
                 var promptInput = document.getElementById('agnesPrompt');
-                if (promptInput) {
-                    promptInput.dispatchEvent(new Event('input'));
-                }
+                if (promptInput) promptInput.dispatchEvent(new Event('input'));
             });
         });
     }
@@ -220,10 +229,9 @@
 
         textarea.addEventListener('input', function() {
             this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 200) + 'px';
+            this.style.height = Math.min(this.scrollHeight, 180) + 'px';
         });
 
-        // Enter 发送（Shift+Enter 换行）
         textarea.addEventListener('keydown', function(e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -239,7 +247,6 @@
     function initSendButton() {
         var sendBtn = document.getElementById('sendBtn');
         if (!sendBtn) return;
-
         sendBtn.addEventListener('click', function() {
             if (state.isGenerating) return;
             generateImage();
@@ -250,7 +257,6 @@
         var sendBtn = document.getElementById('sendBtn');
         var promptInput = document.getElementById('agnesPrompt');
         if (!sendBtn || !promptInput) return;
-
         var hasContent = promptInput.value.trim().length > 0 || state.uploadedImages.length > 0;
         sendBtn.classList.toggle('active', hasContent && !state.isGenerating);
     }
@@ -264,20 +270,11 @@
 
         state.isGenerating = true;
         updateSendButton();
-
-        // 显示加载状态
         showLoading(true);
 
-        // 构建请求参数
-        var sizeMap = {
-            '1K': '1024x1024',
-            '2K': '2048x2048',
-            '4K': '4096x4096'
-        };
-
+        var sizeMap = { '1K': '1024x1024', '2K': '2048x2048', '4K': '4096x4096' };
         var ratio = state.selectedRatio;
         if (ratio === 'auto') ratio = '1:1';
-
         var size = sizeMap[state.selectedResolution] || '1024x1024';
 
         // 前端内容预检
@@ -297,7 +294,7 @@
             action: 'aiphoto_ai_enhance',
             nonce: aiphotoAjax.nonce,
             prompt: prompt || '',
-            template: state.currentTemplate || ''
+            template: ''
         });
 
         fetch(aiphotoAjax.url + '?' + aiParams.toString())
@@ -318,10 +315,7 @@
                 formData.append('size', size);
                 formData.append('ratio', ratio);
 
-                return fetch(aiphotoAjax.url, {
-                    method: 'POST',
-                    body: formData
-                });
+                return fetch(aiphotoAjax.url, { method: 'POST', body: formData });
             })
             .then(function(r) { return r.json(); })
             .then(function(data) {
@@ -345,15 +339,10 @@
     function showLoading(show) {
         var existing = document.querySelector('.agnes-loading');
         if (show) {
-            if (existing) {
-                existing.classList.add('visible');
-                return;
-            }
+            if (existing) { existing.classList.add('visible'); return; }
             var loader = document.createElement('div');
             loader.className = 'agnes-loading visible';
-            loader.innerHTML = '<div class="loading-spinner"></div>' +
-                '<div class="loading-text">AI 正在生成图片...</div>' +
-                '<div class="loading-progress"><div class="loading-progress-bar" id="progressBar"></div></div>';
+            loader.innerHTML = '<div class="loading-spinner"></div><div class="loading-text">AI 正在生成图片...</div>';
             document.getElementById('agnesContent').appendChild(loader);
         } else {
             if (existing) existing.remove();
@@ -361,11 +350,8 @@
     }
 
     function showResult(data) {
-        hideExistingResult();
-
-        var section = document.createElement('div');
-        section.className = 'agnes-result-section visible';
-        section.id = 'resultSection';
+        var section = document.getElementById('resultSection');
+        if (!section) return;
 
         var saveStatus = data.save_status || 'success';
         var warningHtml = '';
@@ -373,6 +359,7 @@
             warningHtml = '<div class="result-error" style="margin-top:12px;background:#fffbeb;border-color:#fde68a;color:#92400e;">⚠️ 图片已生成但保存到网站失败：<br>' + (data.save_error || '未知错误') + '</div>';
         }
 
+        section.style.display = 'block';
         section.innerHTML =
             '<div class="result-header">' +
                 '<h3>生成结果</h3>' +
@@ -392,15 +379,8 @@
             '</div>' +
             warningHtml;
 
-        document.getElementById('agnesContent').appendChild(section);
-
-        // 绑定按钮
         var dlBtn = document.getElementById('downloadBtn');
-        if (dlBtn) {
-            dlBtn.addEventListener('click', function() {
-                window.open(data.url, '_blank');
-            });
-        }
+        if (dlBtn) dlBtn.addEventListener('click', function() { window.open(data.url, '_blank'); });
 
         var cpBtn = document.getElementById('copyPromptBtn');
         if (cpBtn && data.prompt) {
@@ -413,36 +393,24 @@
             });
         }
 
-        // 平滑滚动到结果
         section.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
     function showError(msg) {
-        hideExistingResult();
-
-        var section = document.createElement('div');
-        section.className = 'agnes-result-section visible';
-        section.id = 'resultSection';
+        var section = document.getElementById('resultSection');
+        if (!section) return;
+        section.style.display = 'block';
         section.innerHTML = '<div class="result-error">' + msg + '</div>';
-
-        document.getElementById('agnesContent').appendChild(section);
-
         setTimeout(function() {
-            var el = document.getElementById('resultSection');
-            if (el) el.remove();
+            section.style.display = 'none';
+            section.innerHTML = '';
         }, 5000);
-    }
-
-    function hideExistingResult() {
-        var existing = document.getElementById('resultSection');
-        if (existing) existing.remove();
     }
 
     // ==================== 发现 Tabs ====================
     function initDiscoverTabs() {
         var tabs = document.querySelectorAll('.discover-tab');
         if (tabs.length === 0) return;
-
         tabs.forEach(function(tab) {
             tab.addEventListener('click', function() {
                 tabs.forEach(function(t) { t.classList.remove('active'); });
@@ -451,32 +419,56 @@
         });
     }
 
-    // ==================== 主题切换 ====================
-    function initThemeToggle() {
-        var saved = localStorage.getItem('aiphoto_theme');
-        if (saved) {
-            document.documentElement.setAttribute('data-theme', saved);
-        }
-    }
+    // ==================== 底部推荐卡片 ====================
+    function initRecCards() {
+        var scroll = document.getElementById('recScroll');
+        if (!scroll) return;
 
-    // ==================== 最近作品 ====================
-    function initRecentWorks() {
-        // 从 PHP 注入的最近生成数据
-        var recentGrid = document.querySelector('.gen-recent-grid');
-        if (!recentGrid) return;
+        // 尝试从 featured 目录加载
+        var featuredDir = '<?php echo get_template_directory_uri(); ?>/assets/images/featured/';
+        var placeholders = ['风景', '人像', '插画', '建筑', '抽象', '动物', '食物', '科技'];
+        var colors = ['#e8f5e9','#e3f2fd','#fce4ec','#f3e5f5','#fff3e0','#e0f7fa','#f1f8e9','#ede7f6'];
 
-        // 当有输入时，显示左侧最近作品列表
-        var promptInput = document.getElementById('agnesPrompt');
-        if (!promptInput) return;
-
-        promptInput.addEventListener('input', function() {
-            var sidebar = document.querySelector('.recent-work-list');
-            if (this.value.trim().length > 0) {
-                if (sidebar) sidebar.classList.add('visible');
-            } else {
-                if (sidebar) sidebar.classList.remove('visible');
-            }
+        placeholders.forEach(function(label, i) {
+            var card = document.createElement('div');
+            card.className = 'rec-card';
+            card.innerHTML = '<div style="width:100%;height:100%;background:' + colors[i] + ';display:flex;align-items:center;justify-content:center;color:#aaa;font-size:13px;">' + label + '</div>';
+            scroll.appendChild(card);
         });
     }
 
+    // ==================== 灯箱 ====================
+    function initLightbox() {
+        var lb = document.getElementById('lightbox');
+        if (lb) return; // 已有
+
+        var el = document.createElement('div');
+        el.id = 'lightbox';
+        el.className = 'lightbox';
+        el.innerHTML = '<button class="lightbox-close" aria-label="关闭">&times;</button><img class="lightbox-img" src="" alt=""><div class="lightbox-caption"><p class="lightbox-title"></p></div>';
+        document.body.appendChild(el);
+
+        var img = el.querySelector('.lightbox-img');
+        var title = el.querySelector('.lightbox-title');
+        var close = el.querySelector('.lightbox-close');
+
+        document.addEventListener('click', function(e) {
+            var item = e.target.closest('.recent-item');
+            if (item) {
+                var fullUrl = item.getAttribute('data-full');
+                var prompt = item.getAttribute('data-prompt');
+                if (fullUrl) {
+                    img.src = fullUrl;
+                    title.textContent = prompt || '';
+                    el.classList.add('is-open');
+                    document.body.style.overflow = 'hidden';
+                }
+            }
+        });
+
+        function closeLB() { el.classList.remove('is-open'); document.body.style.overflow = ''; }
+        close.addEventListener('click', closeLB);
+        el.addEventListener('click', function(e) { if (e.target === el) closeLB(); });
+        document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && el.classList.contains('is-open')) closeLB(); });
+    }
 })();
