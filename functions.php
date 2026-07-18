@@ -1171,7 +1171,7 @@ function aiphoto_chat() {
 
     // 添加历史对话
     if ( ! empty( $history ) && is_array( $history ) ) {
-        foreach ( array_slice( $history, -10 ) as $msg ) {
+        foreach ( array_slice( $history, -50 ) as $msg ) {
             if ( isset( $msg['role'] ) && isset( $msg['content'] ) ) {
                 $messages[] = array(
                     'role' => sanitize_text_field( $msg['role'] ),
@@ -1306,7 +1306,7 @@ function aiphoto_chat_stream() {
     );
 
     if ( ! empty( $history ) && is_array( $history ) ) {
-        foreach ( array_slice( $history, -100 ) as $msg ) {
+        foreach ( array_slice( $history, -50 ) as $msg ) {
             if ( isset( $msg['role'] ) && isset( $msg['content'] ) ) {
                 $messages[] = array( 'role' => sanitize_text_field( $msg['role'] ), 'content' => sanitize_textarea_field( $msg['content'] ) );
             }

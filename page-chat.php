@@ -590,7 +590,7 @@ html, body.chat-page {
     font-size: 2.2rem;
     font-weight: 300;
     color: #1f2937;
-    margin: 0;
+    margin: 0 0 12px 0;
     text-align: center;
     letter-spacing: -0.02em;
     line-height: 1.3;
@@ -792,10 +792,10 @@ html, body.chat-page {
     30% { transform: translateY(-6px); }
 }
 
-/* 滚动按钮（输入框正上方居中） */
+/* 滚动按钮（输入框正上方3px，居中） */
 .chat-scroll-btn {
     position: absolute;
-    bottom: 100px;
+    bottom: calc(100% + 3px);
     left: 50%;
     transform: translateX(-50%);
     width: 32px;
@@ -1359,7 +1359,7 @@ html, body.chat-page {
         });
 
         chats[currentChatId].messages = messages;
-        chats[currentChatId].history = conversationHistory.slice(-20);
+        chats[currentChatId].history = conversationHistory.slice(-50);
         chats[currentChatId].updated = Date.now();
 
         // 自动设置标题（取第一条用户消息）
@@ -1498,7 +1498,7 @@ html, body.chat-page {
         var streamUrl = aiphotoAjax.url + '?action=aiphoto_chat_stream&nonce=' +
             encodeURIComponent(aiphotoAjax.nonce) +
             '&message=' + encodeURIComponent(message) +
-            '&history=' + encodeURIComponent(JSON.stringify(conversationHistory.slice(-100)));
+            '&history=' + encodeURIComponent(JSON.stringify(conversationHistory));
 
         fetch(streamUrl, { signal: genAbortController.signal })
             .then(function(response) {
