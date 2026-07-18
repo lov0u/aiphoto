@@ -100,8 +100,8 @@ html, body.chat-page {
 }
 
 .sidebar-nav-item--active {
-    background: #eef2ff;
-    color: #4f46e5;
+    background: #e8eef8;
+    color: #3367D1;
     font-weight: 500;
 }
 
@@ -111,7 +111,7 @@ html, body.chat-page {
 }
 
 .chat-sidebar.collapsed .sidebar-nav-item:hover::after {
-    content: attr(title);
+    content: attr(data-tip);
     position: absolute;
     left: 100%;
     top: 50%;
@@ -133,7 +133,7 @@ html, body.chat-page {
 }
 
 .chat-sidebar.collapsed .sidebar-footer-btn:hover::after {
-    content: attr(title);
+    content: attr(data-tip);
     position: absolute;
     left: 100%;
     top: 50%;
@@ -169,10 +169,12 @@ html, body.chat-page {
 
 .sidebar-footer {
     display: flex;
+    flex-direction: row;
     align-items: center;
     justify-content: space-around;
     padding: 12px 8px;
     border-top: 1px solid #e5e7eb;
+    margin-top: auto;
 }
 
 .sidebar-footer-btn {
@@ -187,6 +189,7 @@ html, body.chat-page {
     justify-content: center;
     color: #9ca3af;
     transition: all 150ms ease;
+    position: relative;
 }
 
 .sidebar-footer-btn:hover {
@@ -194,10 +197,37 @@ html, body.chat-page {
     color: #374151;
 }
 
+.sidebar-footer-btn:hover::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1f2937;
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    z-index: 9999;
+    pointer-events: none;
+}
+
+/* 折叠时底部按钮提示框改为右侧显示 */
+.chat-sidebar.collapsed .sidebar-footer-btn {
+    position: relative;
+}
+
+.chat-sidebar.collapsed .sidebar-footer-btn:hover::after {
+    bottom: auto;
+    top: 50%;
+    left: calc(100% + 8px);
+    transform: translateY(-50%);
+}
+
 /* 侧边栏折叠状态（仿 Agnes AI） */
 .chat-sidebar.collapsed {
     width: 72px;
-    overflow: hidden;
 }
 
 .chat-sidebar.collapsed .sidebar-header {
@@ -231,23 +261,24 @@ html, body.chat-page {
 
 .chat-sidebar.collapsed .sidebar-footer {
     display: flex;
-    flex-direction: row;
-    justify-content: space-around;
+    flex-direction: column;
     align-items: center;
+    gap: 4px;
     padding: 12px 4px;
     border-top: 1px solid #e5e7eb;
+    margin-top: auto;
 }
 
 .chat-sidebar.collapsed .sidebar-footer-btn {
-    width: 24px;
-    height: 24px;
+    width: 32px;
+    height: 32px;
     padding: 0;
     margin: 0;
 }
 
 .chat-sidebar.collapsed .sidebar-footer-btn svg {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
 }
 
 .chat-new-btn {
@@ -267,9 +298,9 @@ html, body.chat-page {
 }
 
 .chat-new-btn:hover {
-    background: #eef2ff;
-    border-color: #818cf8;
-    color: #4f46e5;
+    background: #e8eef8;
+    border-color: #5a8ce6;
+    color: #3367D1;
 }
 
 .chat-new-btn svg {
@@ -318,8 +349,8 @@ html, body.chat-page {
 }
 
 .chat-history-item.active {
-    background: #eef2ff;
-    color: #4f46e5;
+    background: #e8eef8;
+    color: #3367D1;
 }
 
 .chat-history-item-more {
@@ -406,9 +437,12 @@ html, body.chat-page {
 .chat-messages {
     flex: 1;
     overflow-y: auto;
-    padding: 24px 0;
+    padding: 24px 0 120px;
     scroll-behavior: smooth;
     overscroll-behavior: contain;
+    margin-bottom: -80px;
+    position: relative;
+    z-index: 1;
 }
 
 .chat-message {
@@ -429,8 +463,10 @@ html, body.chat-page {
 }
 
 .chat-message--ai {
-    padding: 0 16px;
+    padding: 0;
     box-sizing: border-box;
+    flex-direction: column;
+    align-items: flex-start;
 }
 
 @keyframes fadeIn {
@@ -445,8 +481,8 @@ html, body.chat-page {
 .chat-bubble {
     padding: 12px 16px;
     border-radius: 16px;
-    font-size: 0.9375rem;
-    line-height: 1.6;
+    font-size: 0.875rem;
+    line-height: 1.7;
     word-break: break-word;
 }
 
@@ -464,11 +500,15 @@ html, body.chat-page {
     background: transparent;
     color: #111827;
     border-bottom-left-radius: 4px;
-    padding: 0 16px;
+    padding: 0 4px;
 }
 
 .chat-bubble p { margin: 0 0 8px 0; }
 .chat-bubble p:last-child { margin-bottom: 0; }
+
+.chat-bubble h1 { font-size: 1.2rem; font-weight: 600; margin: 16px 0 8px 0; }
+.chat-bubble h2 { font-size: 1rem; font-weight: 600; margin: 14px 0 6px 0; }
+.chat-bubble h3 { font-size: 0.9375rem; font-weight: 600; margin: 12px 0 6px 0; }
 
 .chat-bubble pre {
     background: #1e293b;
@@ -578,27 +618,30 @@ html, body.chat-page {
 
 /* 欢迎界面（Agnes AI 风格） */
 .chat-welcome {
-    flex: 1;
+    position: absolute;
+    top: 35%;
+    left: 0;
+    right: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    padding: 60px 20px;
+    padding: 0 20px;
+    pointer-events: none;
 }
 
 .chat-welcome-title {
-    font-size: 2.2rem;
+    font-size: 2.6rem;
     font-weight: 300;
     color: #1f2937;
     margin: 0 0 12px 0;
     text-align: center;
-    letter-spacing: -0.02em;
+    letter-spacing: 0.08em;
     line-height: 1.3;
     font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 .chat-welcome-gradient {
-    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    background: linear-gradient(135deg, #3367D1, #2a5298);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -612,6 +655,9 @@ html, body.chat-page {
     justify-content: center;
     gap: 10px;
     margin-top: 24px;
+    position: relative;
+    z-index: 2;
+    background: #fff;
 }
 
 /* 快捷标签（输入框下方，聊天时显示） */
@@ -622,6 +668,9 @@ html, body.chat-page {
     gap: 10px;
     margin-top: 16px;
     margin-bottom: 8px;
+    position: relative;
+    z-index: 2;
+    background: #fff;
 }
 
 .chat-tag {
@@ -637,9 +686,9 @@ html, body.chat-page {
 }
 
 .chat-tag:hover {
-    background: #eef2ff;
-    border-color: #818cf8;
-    color: #4f46e5;
+    background: #e8eef8;
+    border-color: #5a8ce6;
+    color: #3367D1;
 }
 
 .chat-tag-more {
@@ -655,21 +704,25 @@ html, body.chat-page {
     flex-direction: column;
     align-items: center;
     flex-shrink: 0;
+    position: relative;
+    z-index: 2;
+    background: linear-gradient(to bottom, transparent 0%, #fff 30px);
 }
 
 .chat-input-container {
     width: 100%;
     max-width: 900px;
-    background: #f9fafb;
+    background: #ffffff;
     border: 1px solid #e5e7eb;
     border-radius: 24px;
     overflow: visible;
     transition: all 200ms ease;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
 }
 
 .chat-input-container:focus-within {
-    border-color: #818cf8;
-    box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.15);
+    border-color: #5a8ce6;
+    box-shadow: 0 0 0 3px rgba(51,103,209,0.15);
 }
 
 .chat-input-row {
@@ -684,7 +737,7 @@ html, body.chat-page {
     border: none;
     outline: none;
     background: transparent;
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
     resize: none;
     min-height: 24px;
     max-height: 120px;
@@ -700,7 +753,7 @@ html, body.chat-page {
 .chat-send-btn {
     width: 36px;
     height: 36px;
-    background: #4f46e5;
+    background: #3367D1;
     color: #fff;
     border: none;
     border-radius: 50%;
@@ -713,7 +766,7 @@ html, body.chat-page {
 }
 
 .chat-send-btn:hover:not(:disabled) {
-    background: #4f46e5;
+    background: #3367D1;
     color: #fff;
 }
 
@@ -820,8 +873,8 @@ html, body.chat-page {
 }
 
 .chat-scroll-btn:hover {
-    border-color: #a78bfa;
-    box-shadow: 0 2px 10px rgba(167,139,250,0.2);
+    border-color: #5a8ce6;
+    box-shadow: 0 2px 10px rgba(51,103,209,0.2);
 }
 
 .chat-scroll-btn svg {
@@ -885,6 +938,48 @@ html, body.chat-page {
     flex-shrink: 0;
 }
 
+/* ==================== 消息操作按钮 ==================== */
+.chat-feedback {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 6px;
+    padding-left: 0;
+    opacity: 1;
+}
+
+.chat-feedback-btn {
+    width: 28px;
+    height: 28px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+    transition: all 150ms ease;
+}
+
+.chat-feedback-btn:hover {
+    background: #f3f4f6;
+    color: #3367D1;
+}
+
+.chat-feedback-btn.active-like {
+    color: #10b981;
+}
+
+.chat-feedback-btn.active-dislike {
+    color: #ef4444;
+}
+
+.chat-feedback-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
 /* 移动端适配 */
 /* 手机端使用悬浮聊天框，此页面仅桌面端显示 */
 </style>
@@ -904,28 +999,28 @@ html, body.chat-page {
 
         <!-- 新任务按钮 -->
         <div class="sidebar-nav">
-            <button class="sidebar-nav-item sidebar-nav-item--active" id="chatNewBtn" title="新任务">
+            <button class="sidebar-nav-item" id="chatNewBtn" data-tip="新任务">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
                     <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
                     <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
                 </svg>
                 <span>新任务</span>
             </button>
-            <button class="sidebar-nav-item" title="搜索">
+            <button class="sidebar-nav-item" data-tip="搜索">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
                     <circle cx="11" cy="11" r="8"/>
                     <line x1="21" y1="21" x2="16.65" y2="16.65"/>
                 </svg>
                 <span>搜索</span>
             </button>
-            <button class="sidebar-nav-item" title="定时任务">
+            <button class="sidebar-nav-item" data-tip="定时任务">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
                     <circle cx="12" cy="12" r="10"/>
                     <polyline points="12 6 12 12 16 14"/>
                 </svg>
                 <span>定时任务</span>
             </button>
-            <button class="sidebar-nav-item" title="库">
+            <button class="sidebar-nav-item" data-tip="库">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
                     <ellipse cx="12" cy="5" rx="9" ry="3"/>
                     <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
@@ -950,24 +1045,24 @@ html, body.chat-page {
 
         <!-- 底部图标 -->
         <div class="sidebar-footer">
-            <button class="sidebar-footer-btn" title="工具箱">
+            <button class="sidebar-footer-btn" data-tip="工具箱">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
                     <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/>
                 </svg>
             </button>
-            <button class="sidebar-footer-btn" title="定时任务">
+            <button class="sidebar-footer-btn" data-tip="定时任务">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
                     <circle cx="12" cy="12" r="10"/>
                     <polyline points="12 6 12 12 16 14"/>
                 </svg>
             </button>
-            <button class="sidebar-footer-btn" title="设置">
+            <button class="sidebar-footer-btn" data-tip="设置">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
                     <circle cx="12" cy="12" r="3"/>
                     <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
                 </svg>
             </button>
-            <button class="sidebar-footer-btn" title="更多应用">
+            <button class="sidebar-footer-btn" data-tip="更多应用">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
                     <rect x="3" y="3" width="7" height="7"/>
                     <rect x="14" y="3" width="7" height="7"/>
@@ -1001,21 +1096,21 @@ html, body.chat-page {
             <button class="chat-tag chat-tag-more">更多</button>
         </div>
 
-    <!-- 滚动按钮（双向：上/下） -->
-    <button class="chat-scroll-btn" id="scrollBtn">
-        <!-- 箭头朝上（滚到顶部） -->
-        <svg class="arrow-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="12" y1="19" x2="12" y2="5"/>
-            <polyline points="5 12 12 5 19 12"/>
-        </svg>
-        <!-- 箭头朝下（滚到底部） -->
-        <svg class="arrow-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="12" y1="5" x2="12" y2="19"/>
-            <polyline points="19 12 12 19 5 12"/>
-        </svg>
-    </button>
         <!-- 输入区域（居中） -->
         <div class="chat-input-area">
+            <!-- 滚动按钮（双向：上/下） -->
+            <button class="chat-scroll-btn" id="scrollBtn">
+                <!-- 箭头朝上（滚到顶部） -->
+                <svg class="arrow-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="19" x2="12" y2="5"/>
+                    <polyline points="5 12 12 5 19 12"/>
+                </svg>
+                <!-- 箭头朝下（滚到底部） -->
+                <svg class="arrow-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <polyline points="19 12 12 19 5 12"/>
+                </svg>
+            </button>
             <div class="chat-input-container">
                 <div class="chat-input-row">
                     <textarea class="chat-input" id="chatInput" placeholder="分配一个任务或提问任何问题" rows="1"></textarea>
@@ -1299,6 +1394,9 @@ html, body.chat-page {
         document.getElementById('chatWelcomeTags').style.display = 'flex';
         bindWelcomeEvents();
         loadChatList();
+
+        // 高亮新任务按钮
+        chatNewBtn.classList.add('sidebar-nav-item--active');
     }
 
     function loadChat(chatId) {
@@ -1330,6 +1428,7 @@ html, body.chat-page {
         if (welcomeTags) welcomeTags.style.display = 'none';
 
         // 更新侧边栏选中状态
+        chatNewBtn.classList.remove('sidebar-nav-item--active');
         chatHistoryList.querySelectorAll('.chat-history-item').forEach(function(item) {
             item.classList.toggle('active', item.dataset.chatId === chatId);
         });
@@ -1359,16 +1458,8 @@ html, body.chat-page {
         });
 
         chats[currentChatId].messages = messages;
-        chats[currentChatId].history = conversationHistory.slice(-50);
+        chats[currentChatId].history = conversationHistory.slice(-100);
         chats[currentChatId].updated = Date.now();
-
-        // 自动设置标题（取第一条用户消息）
-        if (messages.length > 0 && chats[currentChatId].title === '新对话') {
-            var firstUserMsg = messages.find(function(m) { return m.type === 'user'; });
-            if (firstUserMsg) {
-                chats[currentChatId].title = firstUserMsg.plain.substring(0, 30) + (firstUserMsg.plain.length > 30 ? '...' : '');
-            }
-        }
 
         saveAllChats(chats);
         loadChatList();
@@ -1561,8 +1652,36 @@ html, body.chat-page {
             if (reply) {
                 conversationHistory.push({ role: 'assistant', content: reply });
                 saveCurrentChat();
+
+                // 第一轮对话后自动生成AI标题
+                var chats = getAllChats();
+                if (currentChatId && chats[currentChatId] && chats[currentChatId].title === '新对话') {
+                    generateTitle();
+                }
             }
         }
+    }
+
+    function generateTitle() {
+        if (!currentChatId) return;
+        var formData = new FormData();
+        formData.append('action', 'aiphoto_generate_title');
+        formData.append('nonce', aiphotoAjax.nonce);
+        formData.append('history', JSON.stringify(conversationHistory.slice(0, 10)));
+
+        fetch(aiphotoAjax.url, { method: 'POST', body: formData })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.success && data.data.title) {
+                    var chats = getAllChats();
+                    if (chats[currentChatId]) {
+                        chats[currentChatId].title = data.data.title;
+                        saveAllChats(chats);
+                        loadChatList();
+                    }
+                }
+            })
+            .catch(function() {});
     }
 
     function addMessageToDOM(text, type, animate, isHtml) {
@@ -1572,11 +1691,72 @@ html, body.chat-page {
 
         var content = isHtml ? text : formatMessage(text);
 
-        div.innerHTML = '<div class="chat-bubble">' + content + '</div>';
+        var feedbackHtml = '';
+        if (type === 'ai') {
+            var msgId = 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+            div.setAttribute('data-msg-id', msgId);
+            feedbackHtml = '<div class="chat-feedback">' +
+                '<button class="chat-feedback-btn" data-action="like" data-msg="' + msgId + '" title="有帮助">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14zM7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3"/></svg>' +
+                '</button>' +
+                '<button class="chat-feedback-btn" data-action="dislike" data-msg="' + msgId + '" title="无帮助">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 15v4a3 3 0 003 3l4-9V2H5.72a2 2 0 00-2 1.7l-1.38 9a2 2 0 002 2.3H10zM17 2h2.67A2.31 2.31 0 0122 4v7a2.31 2.31 0 01-2.33 2H17"/></svg>' +
+                '</button>' +
+                '<button class="chat-feedback-btn" data-action="copy" data-msg="' + msgId + '" title="复制">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>' +
+                '</button>' +
+                '</div>';
+        }
+
+        div.innerHTML = '<div class="chat-bubble">' + content + '</div>' + feedbackHtml;
 
         chatMessages.appendChild(div);
         scrollToBottom();
     }
+
+    // 事件委托：反馈按钮
+    chatMessages.addEventListener('click', function(e) {
+        var btn = e.target.closest('.chat-feedback-btn');
+        if (!btn) return;
+        e.stopPropagation();
+
+        var action = btn.getAttribute('data-action');
+        var msgId = btn.getAttribute('data-msg');
+        var msgDiv = btn.closest('.chat-message');
+        var bubble = msgDiv ? msgDiv.querySelector('.chat-bubble') : null;
+
+        if (action === 'like') {
+            var isActive = btn.classList.contains('active-like');
+            var siblings = btn.parentElement.querySelectorAll('.chat-feedback-btn');
+            siblings.forEach(function(s) { s.classList.remove('active-like', 'active-dislike'); });
+            if (!isActive) btn.classList.add('active-like');
+        } else if (action === 'dislike') {
+            var isActive2 = btn.classList.contains('active-dislike');
+            var siblings2 = btn.parentElement.querySelectorAll('.chat-feedback-btn');
+            siblings2.forEach(function(s) { s.classList.remove('active-like', 'active-dislike'); });
+            if (!isActive2) btn.classList.add('active-dislike');
+        } else if (action === 'copy') {
+            if (bubble) {
+                var text = bubble.textContent || bubble.innerText;
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(function() {
+                        btn.style.color = '#10b981';
+                        setTimeout(function() { btn.style.color = ''; }, 1500);
+                    });
+                } else {
+                    var ta = document.createElement('textarea');
+                    ta.value = text;
+                    ta.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;opacity:0';
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(ta);
+                    btn.style.color = '#10b981';
+                    setTimeout(function() { btn.style.color = ''; }, 1500);
+                }
+            }
+        }
+    });
 
     function addLoading() {
         var id = 'loading-' + Date.now();

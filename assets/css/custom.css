@@ -64,8 +64,12 @@
    SELECTION STYLING
    ============================================ */
 ::selection {
-    background: var(--color-primary);
-    color: var(--color-on-primary);
+    background: #3367D1;
+    color: #fff;
+}
+::-moz-selection {
+    background: #3367D1;
+    color: #fff;
 }
 
 /* ============================================
